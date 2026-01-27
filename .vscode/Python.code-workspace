@@ -1,0 +1,29 @@
+{
+	"folders": [
+		{
+			"path": "..",
+			"name": "Python"
+		},
+		{
+			"path": ".",
+			"name": "Workspace Settings"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": true,
+			"**/.svn": true,
+			"**/.hg": true,
+			"**/.DS_Store": true,
+			"**/Thumbs.db": true,
+			".vscode": true
+		},
+		"[python]": {
+			"editor.formatOnSaveMode": "file",
+			"editor.formatOnSave": true,
+			"editor.defaultFormatter": "eeyore.yapf",
+			"editor.formatOnType": false
+		},
+		"python.analysis.typeCheckingMode": "standard"
+	}
+}
