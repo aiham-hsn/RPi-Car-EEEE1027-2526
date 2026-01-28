@@ -15,8 +15,8 @@ left_dir = Motor(forward=IN1, backward=IN2)
 right_dir = Motor(forward=IN3, backward=IN4)
 
 # Init PWM control of motors
-right_pwm = PWMOutputDevice(ENA, frequency=1000)
-left_pwm = PWMOutputDevice(ENB, frequency=1000)
+left_pwm = PWMOutputDevice(ENA, frequency=1000)
+right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
 
 def set_duty_cycle_both(input: Union[int, float]) -> None:
