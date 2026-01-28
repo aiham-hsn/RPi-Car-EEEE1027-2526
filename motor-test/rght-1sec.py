@@ -19,7 +19,7 @@ right_pwm = PWMOutputDevice(ENA, frequency=1000)
 left_pwm = PWMOutputDevice(ENB, frequency=1000)
 
 
-def duty_cycle(input: Union[int, float]) -> None:
+def set_duty_cycle_both(input: Union[int, float]) -> None:
     if input < 0:
         left_pwm.value = 0
         right_pwm.value = 0
@@ -31,7 +31,25 @@ def duty_cycle(input: Union[int, float]) -> None:
         right_pwm.value = input
 
 
-duty_cycle(1)
+def set_duty_cycle_left(input: Union[int, float]) -> None:
+    if input < 0:
+        left_pwm.value = 0
+    elif input > 1:
+        left_pwm.value = 1
+    else:
+        left_pwm.value = input
+
+
+def set_duty_cycle_right(input: Union[int, float]) -> None:
+    if input < 0:
+        right_pwm.value = 0
+    elif input > 1:
+        right_pwm.value = 1
+    else:
+        right_pwm.value = input
+
+
+set_duty_cycle_both(1)
 left_dir.forward()
 right_dir.backward()
 sleep(1)
