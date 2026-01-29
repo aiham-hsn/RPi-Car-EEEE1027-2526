@@ -50,6 +50,6 @@ def set_duty_cycle_right(input: Union[int, float]) -> None:
 
 
 set_duty_cycle_both(1)
-left_dir.backward()
+left_dir.stop()
 right_dir.forward()
 sleep(1)
