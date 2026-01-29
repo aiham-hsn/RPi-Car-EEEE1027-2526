@@ -41,6 +41,11 @@ parser.add_argument("-t",
                     type=int,
                     default=1,
                     help="Amount of time in seconds the car is to move")
+parser.add_argument("-d",
+                    "--duty-cycle",
+                    type=int,
+                    default=80,
+                    help="Duty cycle to drive the car at, as a percentage")
 args = parser.parse_args()
 
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
@@ -59,7 +64,7 @@ right_dir = Motor(forward=IN3, backward=IN4)
 left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
-set_duty_cycle_both(1)
+set_duty_cycle_both(args.duty_cycle)
 left_dir.forward()
 right_dir.forward()
 sleep(args.time)
