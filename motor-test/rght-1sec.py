@@ -49,7 +49,8 @@ def set_duty_cycle_right(input: Union[int, float]) -> None:
         right_pwm.value = input
 
 
-set_duty_cycle_both(1)
+set_duty_cycle_left(0.6)
+set_duty_cycle_right(0)
 left_dir.forward()
 right_dir.stop()
 sleep(1)
