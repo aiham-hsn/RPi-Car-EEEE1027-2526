@@ -40,7 +40,7 @@ def angle2dutycycle(angle: Union[int, float]) -> Union[int, float]:
     return out
 
 
-# Setup arguement parsing
+# Setup command-line arguement parsing
 parser = argparse.ArgumentParser()
 parser.add_argument("-t",
                     "--turn",
