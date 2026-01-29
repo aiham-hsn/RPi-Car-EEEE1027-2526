@@ -1,5 +1,5 @@
 import argparse
-from sys import exit, stderr
+# from sys import exit, stderr
 from gpiozero import Motor, PWMOutputDevice
 from time import sleep
 from typing import Union
