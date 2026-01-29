@@ -40,33 +40,64 @@ def angle2dutycycle(angle: Union[int, float]) -> Union[int, float]:
     return out
 
 
+def turn_right(duty_cycle: Union[int, float]) -> None:
+    print("Turning Right")
+    set_duty_cycle_left(duty_cycle)
+    set_duty_cycle_right(0)
+    left_dir.forward()
+    right_dir.stop()
+
+
+def turn_left(duty_cycle: Union[int, float]) -> None:
+    print("Turning Left")
+    set_duty_cycle_left(0)
+    set_duty_cycle_right(duty_cycle)
+    left_dir.stop()
+    right_dir.forward()
+
+
 # Setup command-line arguement parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("-t",
-                    "--turn",
-                    type=int,
-                    required=True,
-                    help="Amount in degrees to turn the car left")
+parser.add_argument(
+    "-a",
+    "--angle",
+    type=int,
+    required=True,
+    help=
+    "Amount in degrees to turn the car left. Argument passed must be a positive number."
+)
+parser.add_argument(
+    "-d",
+    "--direction",
+    type=str,
+    required=True,
+    help=
+    "The direction the car is to turn. Arguement passed must be either the letter \"L\" or \"R\", or the word \"Left\" or \"Right\""
+)
 args = parser.parse_args()
 # print(args)
 
-if args.turn > 135:
+if args.angle > 135:
     raise argparse.ArgumentTypeError(
-        "Turn angles exceeding 135 degrees are not supported")
+        "Turn angles exceeding 135 degrees are not supported.")
+if args.angle < 0:
+    raise argparse.ArgumentTypeError(
+        "Negative turn angles are not supported. To change the direction of motion, please pass a \"direction\" arguement"
+    )
 
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
 ENB = 19  # Control left side motors;  GPIO/BCM pin 19, Physical/Board pin 35
 
 DUTY_CYCLE = 0
-match args.turn:
+match args.angle:
     case 90:
         DUTY_CYCLE = 0.85
     case 45:
         DUTY_CYCLE = 0.60
     case _:
-        DUTY_CYCLE = angle2dutycycle(args.turn)
-        # raise Exception(f"A turn angle of {args.turn} is not supported")
-        # print(f"ERROR: A turn angle of {args.turn} is not supported",
+        DUTY_CYCLE = angle2dutycycle(args.angle)
+        # raise Exception(f"A turn angle of {args.angle} is not supported")
+        # print(f"ERROR: A turn angle of {args.angle} is not supported",
         #       file=stderr)
         # exit(1)
 
@@ -83,8 +114,24 @@ right_dir = Motor(forward=IN3, backward=IN4)
 left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
-set_duty_cycle_left(DUTY_CYCLE)
-set_duty_cycle_right(0)
-left_dir.forward()
-right_dir.stop()
+if len(args.direction) > 1:
+    match set(["LEFT",
+               "RIGHT"]).intersection(set([args.direction.upper()])).pop():
+        case "LEFT":
+            turn_left(DUTY_CYCLE)
+        case "RIGHT":
+            turn_right(DUTY_CYCLE)
+        case _:
+            raise argparse.ArgumentTypeError(
+                f"\"--direction\" arguement [{args.direction}] is invalid")
+else:
+    match args.direction.upper():
+        case "L":
+            turn_left(DUTY_CYCLE)
+        case "R":
+            turn_right(DUTY_CYCLE)
+        case _:
+            raise argparse.ArgumentTypeError(
+                f"\"--direction\" arguement [{args.direction}] is invalid")
+
 sleep(1)
