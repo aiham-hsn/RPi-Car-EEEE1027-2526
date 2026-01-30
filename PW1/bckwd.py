@@ -1,3 +1,4 @@
+import argparse
 from gpiozero import Motor, PWMOutputDevice
 from time import sleep
 from typing import Union
@@ -33,6 +34,20 @@ def set_duty_cycle_right(input: Union[int, float]) -> None:
         right_pwm.value = input
 
 
+# Setup command-line arguement parsing
+parser = argparse.ArgumentParser()
+parser.add_argument("-t",
+                    "--time",
+                    type=int,
+                    default=1,
+                    help="Amount of time in seconds the car is to move")
+parser.add_argument("-d",
+                    "--duty-cycle",
+                    type=int,
+                    default=80,
+                    help="Duty cycle to drive the car at, as a percentage")
+args = parser.parse_args()
+
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
 ENB = 19  # Control left side motors;  GPIO/BCM pin 19, Physical/Board pin 35
 
@@ -49,7 +64,13 @@ right_dir = Motor(forward=IN3, backward=IN4)
 left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
-set_duty_cycle_both(1)
+duty_cycle = args.duty_cycle / 100
+
+print(
+    f"Input time       : {args.time} second\nInput duty cycle : {args.duty_cycle}\n"
+)
+
+set_duty_cycle_both(duty_cycle)
 left_dir.backward()
 right_dir.backward()
-sleep(1)
+sleep(args.time)
