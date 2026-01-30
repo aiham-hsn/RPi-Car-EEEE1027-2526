@@ -64,8 +64,11 @@ right_dir = Motor(forward=IN3, backward=IN4)
 left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
-print(f"Input time       : {args.time} second\nInput duty cycle : {args.duty_cycle}")
 duty_cycle = args.duty_cycle / 100
+
+print(
+    f"Input time       : {args.time} second\nInput duty cycle : {args.duty_cycle}\n"
+)
 
 set_duty_cycle_both(duty_cycle)
 left_dir.forward()
