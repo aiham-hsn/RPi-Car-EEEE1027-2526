@@ -35,14 +35,14 @@ def set_duty_cycle_right(input: Union[int, float]) -> None:
 
 
 def drive_fwd(ds):
-    print("Moving forwards")
+    print('Moving forwards')
     set_duty_cycle_both(ds)
     left_dir.forward()
     right_dir.forward()
 
 
 def drive_bckwd(ds):
-    print("Moving backwards")
+    print('Moving backwards')
     set_duty_cycle_both(ds)
     left_dir.backward()
     right_dir.backward()
@@ -62,37 +62,37 @@ def speed2dutycycle(time, speed):
 # Setup command-line arguement parsing
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "-t",
-    "--time",
+    '-t',
+    '--time',
     type=float,
     required=True,
-    help="Amount of time in seconds the car is to move")
+    help='Amount of time in seconds the car is to move')
 parser.add_argument(
-    "-d",
-    "--direction",
+    '-d',
+    '--direction',
     type=str,
     required=True,
-    help="The direction the car is to move. Arguement passed must be either the letter \"F\" or \"B\", or the word \"Forward\" or \"Backward\""
+    help='The direction the car is to move. Arguement passed must be either the letter "F" or "B", or the word "Forward" or "Backward"'
 )
 mvmnt = parser.add_mutually_exclusive_group()
 mvmnt.add_argument(
-    "-d",
-    "--duty-cycle",
+    '-d',
+    '--duty-cycle',
     type=float,
-    help="Duty cycle to drive the car at, as a percentage")
+    help='Duty cycle to drive the car at, as a percentage')
 mvmnt.add_argument(
-    "-s", "--speed", type=float, help="Speed to drive the car at, in cm/s")
+    '-s', '--speed', type=float, help='Speed to drive the car at, in cm/s')
 args = parser.parse_args()
 # print(args)
 # print(args.duty_cycle or args.speed)
 
 if args.time < 0:
     raise argparse.ArgumentTypeError(
-        "Time passed to program cannot be a negative value.")
+        'Time passed to program cannot be a negative value.')
 
 if (args.duty_cycle or args.speed) is None:
     raise argparse.ArgumentTypeError(
-        "Either speed or duty cycle must be specified")
+        'Either speed or duty cycle must be specified')
 
 duty_cycle = 0
 
@@ -102,7 +102,7 @@ if args.speed is None:  # input is duty cycle
 else:
     print('Speed has been specified\n')
     if args.speed > 71:
-        raise argparse.ArgumentTypeError("Maximum speed is 71 cm/s")
+        raise argparse.ArgumentTypeError('Maximum speed is 71 cm/s')
     duty_cycle = speed2dutycycle(args.time, args.speed)
 
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
@@ -122,7 +122,7 @@ left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
 print(
-    f"Input time      (seconds) : {args.time}\nInput duty cycle      (%) : {args.duty_cycle}\nInput speed        (cm/s) : {args.speed}\nCalculated duty cycle (%) : {duty_cycle * 100:.3f}\n"
+    f'Input time      (seconds) : {args.time}\nInput duty cycle      (%) : {args.duty_cycle}\nInput speed        (cm/s) : {args.speed}\nCalculated duty cycle (%) : {duty_cycle * 100:.3f}\n'
 )
 
 set_duty_cycle_both(duty_cycle)
@@ -130,23 +130,23 @@ left_dir.forward()
 right_dir.forward()
 
 if len(args.direction) > 1:
-    match set(["FORWARD",
-        "RIGHT"]).intersection(set([args.direction.upper()])).pop():
-        case "FORWARD":
-            drive_fwd(DUTY_CYCLE)
-        case "BACKWARD":
-            turn_right(DUTY_CYCLE)
+    match set(['FORWARD',
+        'BACKWARD']).intersection(set([args.direction.upper()])).pop():
+        case 'FORWARD':
+            drive_fwd(duty_cycle)
+        case 'BACKWARD':
+            drive_bckwd(duty_cycle)
         case _:
             raise argparse.ArgumentTypeError(
-                f"\"--direction\" arguement [{args.direction}] is invalid")
+                f'"--direction" arguement [{args.direction}] is invalid')
 else:
     match args.direction.upper():
-        case "F":
-            drive_fwd(DUTY_CYCLE)
-        case "B":
-            turn_right(DUTY_CYCLE)
+        case 'F':
+            drive_fwd(duty_cycle)
+        case 'B':
+            drive_bckwd(duty_cycle)
         case _:
             raise argparse.ArgumentTypeError(
-                f"\"--direction\" arguement [{args.direction}] is invalid")
+                f'"--direction" arguement [{args.direction}] is invalid')
 
 sleep(args.time)
