@@ -64,6 +64,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "-t",
     "--time",
+    type=float,
     required=True,
     help="Amount of time in seconds the car is to move")
 parser.add_argument(
@@ -77,33 +78,32 @@ mvmnt = parser.add_mutually_exclusive_group()
 mvmnt.add_argument(
     "-d",
     "--duty-cycle",
+    type=float,
     help="Duty cycle to drive the car at, as a percentage")
-mvmnt.add_argument("-s", "--speed", help="Speed to drive the car at, in cm/s")
+mvmnt.add_argument(
+    "-s", "--speed", type=float, help="Speed to drive the car at, in cm/s")
 args = parser.parse_args()
 # print(args)
 # print(args.duty_cycle or args.speed)
 
-time, speed, duty_cycle = list(
-    map(float, [args.time, args.speed, args.duty_cycle]))
-
-if time < 0:
+if args.time < 0:
     raise argparse.ArgumentTypeError(
         "Time passed to program cannot be a negative value.")
 
-if (args.duty_cycle or speed) is None:
+if (args.duty_cycle or args.speed) is None:
     raise argparse.ArgumentTypeError(
         "Either speed or duty cycle must be specified")
 
 duty_cycle = 0
 
-if speed is None:  # input is duty cycle
+if args.speed is None:  # input is duty cycle
     print('Duty cycle has been specified\n')
     duty_cycle = args.duty_cycle / 100
 else:
     print('Speed has been specified\n')
-    if speed > 71:
+    if args.speed > 71:
         raise argparse.ArgumentTypeError("Maximum speed is 71 cm/s")
-    duty_cycle = speed2dutycycle(time, speed)
+    duty_cycle = speed2dutycycle(args.time, args.speed)
 
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
 ENB = 19  # Control left side motors;  GPIO/BCM pin 19, Physical/Board pin 35
@@ -122,7 +122,7 @@ left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
 print(
-    f"Input time      (seconds) : {time}\nInput duty cycle      (%) : {args.duty_cycle}\nInput speed        (cm/s) : {speed}\nCalculated duty cycle (%) : {duty_cycle * 100:.3f}\n"
+    f"Input time      (seconds) : {args.time}\nInput duty cycle      (%) : {args.duty_cycle}\nInput speed        (cm/s) : {args.speed}\nCalculated duty cycle (%) : {duty_cycle * 100:.3f}\n"
 )
 
 set_duty_cycle_both(duty_cycle)
@@ -149,4 +149,4 @@ else:
             raise argparse.ArgumentTypeError(
                 f"\"--direction\" arguement [{args.direction}] is invalid")
 
-sleep(time)
+sleep(args.time)
