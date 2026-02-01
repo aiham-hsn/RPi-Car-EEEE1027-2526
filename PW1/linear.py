@@ -50,33 +50,34 @@ def drive_bckwd(ds):
 
 def speed2dutycycle(time, speed):
     if time <= 1.5:
-        duty_cycle = (speed + 1.16786
-                      ) / 0.720071  # from linear regression of testing data
+        duty_cycle = (speed +
+            1.16786) / 0.720071  # from linear regression of testing data
         return (duty_cycle / 100)
     else:
-        duty_cycle = (speed + 12.24778
-                      ) / 0.95181  # from linear regression of testing data
+        duty_cycle = (speed +
+            12.24778) / 0.95181  # from linear regression of testing data
         return (duty_cycle / 100)
 
 
 # Setup command-line arguement parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("-t",
-                    "--time",
-                    required=True,
-                    help="Amount of time in seconds the car is to move")
+parser.add_argument(
+    "-t",
+    "--time",
+    required=True,
+    help="Amount of time in seconds the car is to move")
 parser.add_argument(
     "-d",
     "--direction",
     type=str,
     required=True,
-    help=
-    "The direction the car is to move. Arguement passed must be either the letter \"F\" or \"B\", or the word \"Forward\" or \"Backward\""
+    help="The direction the car is to move. Arguement passed must be either the letter \"F\" or \"B\", or the word \"Forward\" or \"Backward\""
 )
 mvmnt = parser.add_mutually_exclusive_group()
-mvmnt.add_argument("-d",
-                   "--duty-cycle",
-                   help="Duty cycle to drive the car at, as a percentage")
+mvmnt.add_argument(
+    "-d",
+    "--duty-cycle",
+    help="Duty cycle to drive the car at, as a percentage")
 mvmnt.add_argument("-s", "--speed", help="Speed to drive the car at, in cm/s")
 args = parser.parse_args()
 # print(args)
@@ -130,7 +131,7 @@ right_dir.forward()
 
 if len(args.direction) > 1:
     match set(["FORWARD",
-               "RIGHT"]).intersection(set([args.direction.upper()])).pop():
+        "RIGHT"]).intersection(set([args.direction.upper()])).pop():
         case "FORWARD":
             drive_fwd(DUTY_CYCLE)
         case "BACKWARD":
