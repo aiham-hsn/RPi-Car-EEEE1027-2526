@@ -24,6 +24,10 @@
 			"editor.defaultFormatter": "eeyore.yapf",
 			"editor.formatOnType": false
 		},
+		"yapf.args": [
+			"--style",
+			"{based_on_style: yapf, use_tabs: false, indent_width: 4, column_limit: 80, each_dict_entry_on_separate_line: true, force_multiline_dict: true, continuation_align_style: fixed}"
+		],
 		"python.analysis.typeCheckingMode": "standard"
 	}
 }
