@@ -48,15 +48,37 @@ def drive_bckwd(ds):
     right_dir.backward()
 
 
-def speed2dutycycle(time, speed):
+def speed2dutycycle(time: float, direction: str, speed: float) -> float:
     if time <= 1.5:
-        duty_cycle = (speed +
-            1.16786) / 0.720071  # from linear regression of testing data
-        return (duty_cycle / 100)
+        match direction:
+            case 'F':
+                duty_cycle = (
+                    speed + 1.16786
+                ) / 0.720071  # from linear regression of testing data
+                return (duty_cycle / 100)
+            case 'B':
+                duty_cycle = (
+                    speed + 2.79
+                ) / 0.748  # from linear regression of testing data
+                return (duty_cycle / 100)
+            case _:
+                raise argparse.ArgumentTypeError(
+                    f'"--direction" arguement [{direction}] is invalid')
     else:
-        duty_cycle = (speed +
-            12.24778) / 0.95181  # from linear regression of testing data
-        return (duty_cycle / 100)
+        match direction:
+            case 'F':
+                duty_cycle = (
+                    speed + 12.24778
+                ) / 0.95181  # from linear regression of testing data
+                return (duty_cycle / 100)
+            case 'B':
+                duty_cycle = (
+                    speed + 18.71944
+                ) / 1.05333  # from linear regression of testing data
+                return (duty_cycle / 100)
+            case _:
+                raise argparse.ArgumentTypeError(
+                    f'"--direction" arguement [{direction}] is invalid')
 
 
 # Setup command-line arguement parsing
@@ -95,6 +117,27 @@ if (args.duty_cycle or args.speed) is None:
         'Either speed or duty cycle must be specified')
 
 duty_cycle = 0
+mvmnt_dir = 'F'
+
+if len(args.direction) > 1:
+    match set(['FORWARD',
+        'BACKWARD']).intersection(set([args.direction.upper()])).pop():
+        case 'FORWARD':
+            mvmnt_dir = 'F'
+        case 'BACKWARD':
+            mvmnt_dir = 'B'
+        case _:
+            raise argparse.ArgumentTypeError(
+                f'"--direction" arguement [{args.direction}] is invalid')
+else:
+    match args.direction.upper():
+        case 'F':
+            mvmnt_dir = 'F'
+        case 'B':
+            mvmnt_dir = 'B'
+        case _:
+            raise argparse.ArgumentTypeError(
+                f'"--direction" arguement [{args.direction}] is invalid')
 
 if args.speed is None:  # input is duty cycle
     print('Duty cycle has been specified\n')
@@ -103,7 +146,7 @@ else:
     print('Speed has been specified\n')
     if args.speed > 71:
         raise argparse.ArgumentTypeError('Maximum speed is 71 cm/s')
-    duty_cycle = speed2dutycycle(args.time, args.speed)
+    duty_cycle = speed2dutycycle(args.time, mvmnt_dir, args.speed)
 
 ENA = 13  # Control right side motors; GPIO/BCM pin 13, Physical/Board pin 33
 ENB = 19  # Control left side motors;  GPIO/BCM pin 19, Physical/Board pin 35
@@ -125,28 +168,13 @@ print(
     f'Input time      (seconds) : {args.time}\nInput duty cycle      (%) : {args.duty_cycle}\nInput speed        (cm/s) : {args.speed}\nCalculated duty cycle (%) : {duty_cycle * 100:.3f}\n'
 )
 
-set_duty_cycle_both(duty_cycle)
-left_dir.forward()
-right_dir.forward()
-
-if len(args.direction) > 1:
-    match set(['FORWARD',
-        'BACKWARD']).intersection(set([args.direction.upper()])).pop():
-        case 'FORWARD':
-            drive_fwd(duty_cycle)
-        case 'BACKWARD':
-            drive_bckwd(duty_cycle)
-        case _:
-            raise argparse.ArgumentTypeError(
-                f'"--direction" arguement [{args.direction}] is invalid')
-else:
-    match args.direction.upper():
-        case 'F':
-            drive_fwd(duty_cycle)
-        case 'B':
-            drive_bckwd(duty_cycle)
-        case _:
-            raise argparse.ArgumentTypeError(
-                f'"--direction" arguement [{args.direction}] is invalid')
+match mvmnt_dir:
+    case 'F':
+        drive_fwd(duty_cycle)
+    case 'B':
+        drive_bckwd(duty_cycle)
+    case _:
+        raise argparse.ArgumentTypeError(
+            f'"--direction" arguement [{mvmnt_dir}] is invalid')
 
 sleep(args.time)
