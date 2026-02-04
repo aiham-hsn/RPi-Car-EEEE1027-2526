@@ -1,0 +1,12 @@
+[project]
+name = "rpi-car-eeee1027-2526"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Mohamed Aiham Hussain", email = "aihamhussain2001@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "gpiozero>=2.0.1",
+]
