@@ -1,12 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "..",
-			"name": "Python"
+			"name": "Python",
+			"path": ".."
 		},
 		{
-			"path": ".",
-			"name": "Workspace Settings"
+			"name": "Workspace Settings",
+			"path": "."
 		}
 	],
 	"settings": {
