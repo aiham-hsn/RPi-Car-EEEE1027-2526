@@ -1,5 +1,6 @@
 from picamera2 import Picamera2
 from numpy.typing import NDArray
+import numpy as np
 import libcamera
 import cv2
 import time
@@ -14,10 +15,19 @@ def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
     # Apply an adaptive threshold to convert the image to
     # pure black and pure white
-    adapt_thresh = cv2.adaptiveThreshold(processed_gray, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 99, 5)
+    thresh = cv2.adaptiveThreshold(processed_gray, 255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 45, 5)
 
-    return processed_gray, adapt_thresh
+    # Apply Otsu's Binarization to normal thresholding
+    # _, thresh = cv2.threshold(processed_gray, 0, 255,
+    #     cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    thresh = cv2.bitwise_not(thresh)  # invert colours for morphology operations
+    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
+    thresh = cv2.erode(thresh, kernel, iterations=1)
+    thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+
+    return processed_gray, thresh
 
 
 picam2 = Picamera2()
