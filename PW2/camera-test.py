@@ -2,7 +2,6 @@ from picamera2 import Picamera2
 from numpy.typing import NDArray
 import libcamera
 import cv2
-import numpy as np
 import time
 
 
