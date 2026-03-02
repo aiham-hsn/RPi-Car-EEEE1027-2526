@@ -15,7 +15,7 @@ def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
     # Apply an adaptive threshold to convert the image to
     # pure black and pure white
     adapt_thresh = cv2.adaptiveThreshold(processed_gray, 255,
-        cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 199, 5)
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 99, 5)
 
     return processed_gray, adapt_thresh
 
