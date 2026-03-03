@@ -115,13 +115,13 @@ try:
         # processed, thresh, threshval = process_frame_otsu(frame)
         # print(threshval)
 
-        # height, width = np.shape(thresh)
+        height, width = np.shape(thresh)
 
-        frame_roi = frame[int(cam_size_x *
-            (frame_discard_percentage - frame_discard_offset)):int(cam_size_x *
+        frame_roi = frame[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
-        thresh_roi = thresh[int(cam_size_x *
-            (frame_discard_percentage - frame_discard_offset)):int(cam_size_x *
+        thresh_roi = thresh[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
 
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL,
