@@ -166,7 +166,7 @@ pid = PID(
     Kd=0.35,
     setpoint=(cam_size_x / 2),
     sample_time=0.01,
-    output_limits=(0, 40),
+    output_limits=(0, cam_size_x),
     starting_output=(cam_size_x / 2))
 
 picam2 = Picamera2()
@@ -219,18 +219,36 @@ try:
             centroid_x = int(moments['m10'] / (moments['m00'] or 1))
             centroid_y = int(moments['m01'] / (moments['m00'] or 1))
 
-            correction = pid(centroid_x)
-            print(f"Line center: [{centroid_x}] | PID: [{correction}] | ")
+            pid_out = pid(centroid_x)
+            correction = (
+                (pid_out - (cam_size_x / 2)) / 4
+            ) / 100  # Div by 4 to scale values down, div by 100 to convert to decimal percentage
+            # print(
+            #     f"Line center: [{centroid_x}] | PID: [{pid_out:.2f}] | Corr: [{correction:.2f}]"
+            # )
+
+            left_speed = BASE_SPEED - correction
+            right_speed = BASE_SPEED + correction
+            print(
+                f"Line center: [{centroid_x}] | Corr: [{correction:.2f}] | LS: [{left_speed:.2f}] | RS: [{right_speed:.2f}]"
+            )
+
+            set_duty_cycle_left(left_speed)
+            set_duty_cycle_right(right_speed)
+            left_dir.forward()
+            right_dir.forward()
 
             frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
                 (0, 255, 0), 3)
             cv2.circle(frame_roi_w_contours, (centroid_x, centroid_y), 4,
                 (255, 0, 0), 4)
+            cv2.circle(frame_roi_w_contours, (int(pid_out), centroid_y), 4,
+                (255, 0, 250), 4)
 
         # Display the different frames
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
-        cv2.imshow('Thresholded', thresh)
+        # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
         cv2.imshow('ROI w/ contours', frame_roi_w_contours)
