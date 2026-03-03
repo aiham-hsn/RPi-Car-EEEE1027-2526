@@ -115,6 +115,7 @@ try:
         frame_roi = frame[int(height *
             (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
+        frame_roi_w_contours = frame_roi
         thresh_roi = thresh[int(height *
             (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
@@ -122,14 +123,16 @@ try:
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL,
             cv2.CHAIN_APPROX_SIMPLE)
         main_contour = find_main_countour(contours)
-        moments = cv2.moments(main_contour)
-        centroid_x = int(moments['m10'] / moments['m00'])
-        centroid_y = int(moments['m01'] / moments['m00'])
 
-        frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
-            (0, 255, 0), 3)
-        cv2.circle(frame_roi_w_contours, (centroid_x, centroid_y), 4,
-            (255, 0, 0), 4)
+        if main_contour is not None:
+            moments = cv2.moments(main_contour)
+            centroid_x = int(moments['m10'] / moments['m00'])
+            centroid_y = int(moments['m01'] / moments['m00'])
+
+            frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
+                (0, 255, 0), 3)
+            cv2.circle(frame_roi_w_contours, (centroid_x, centroid_y), 4,
+                (255, 0, 0), 4)
 
         # Display the different frames
         # cv2.imshow('Original', frame)
