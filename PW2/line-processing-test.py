@@ -20,7 +20,9 @@ def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    ## Above line is commented out because OpenCV's contour detection expects
+    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh
 
@@ -40,7 +42,9 @@ def process_frame_adaptive(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    ## Above line is commented out because OpenCV's contour detection expects
+    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh
 
@@ -60,9 +64,21 @@ def process_frame_otsu(
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
+    ## Above line is commented out because OpenCV's contour detection expects
+    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh, computed_thres_val
+
+
+def find_main_countour(input_contours):
+    ## modified from https://github.com/tprlab/pitanq-dev
+    largest_contour = None
+    if input_contours is not None and len(input_contours) > 0:
+        largest_contour = max(input_contours, key=cv2.contourArea)
+    if largest_contour is None:
+        return None
+    return largest_contour
 
 
 cam_size_x = 640
@@ -108,12 +124,30 @@ try:
             (frame_discard_percentage - frame_discard_offset)):int(cam_size_x *
             (1 - frame_discard_offset)):]
 
+        contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE)
+        main_contour = find_main_countour(contours)
+        moments = cv2.moments(main_contour)
+        centroid_x = int(moments['m10'] / moments['m00'])
+        centroid_y = int(moments['m01'] / moments['m00'])
+
+        frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
+            (0, 255, 0), 3)
+        cv2.circle(frame_roi_w_contours, (centroid_x, centroid_y), 4,
+            (255, 0, 0), 4)
+
+        # cv2.line(thresh, (left_line_x_pos, 0), (left_line_x_pos, cam_size_y),
+        #     (0, 0, 0), 1)
+        # cv2.line(thresh, (right_line_x_pos, 0), (right_line_x_pos, cam_size_y),
+        #     (0, 0, 0), 1)
+
         # Display the different frames
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         cv2.imshow('Thresholded', thresh)
-        cv2.imshow('Orignal ROI', frame_roi)
-        cv2.imshow('Thresholded ROI', thresh_roi)
+        # cv2.imshow('Orignal ROI', frame_roi)
+        # cv2.imshow('Thresholded ROI', thresh_roi)
+        cv2.imshow('ROI w/ contours', frame_roi_w_contours)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
