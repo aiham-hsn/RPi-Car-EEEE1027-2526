@@ -1,8 +1,9 @@
 from typing import Union
-from gpiozero import Motor, PWMOutputDevice
 from numpy.typing import NDArray
 from cv2.typing import MatLike
+from gpiozero import Motor, PWMOutputDevice
 from picamera2 import Picamera2
+from simple_pid import PID
 import numpy as np
 import libcamera
 import cv2
@@ -159,6 +160,15 @@ right_dir = Motor(forward=IN3, backward=IN4)
 left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
+pid = PID(
+    Kp=0.8,
+    Ki=0.03,
+    Kd=0.35,
+    setpoint=(cam_size_x / 2),
+    sample_time=0.01,
+    output_limits=(0, 40),
+    starting_output=(cam_size_x / 2))
+
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
@@ -178,6 +188,7 @@ frame_discard_percentage = 0.4
 frame_discard_offset = 0.125
 
 threshval = -1
+BASE_SPEED = 0.65
 
 try:
     while True:
@@ -207,6 +218,9 @@ try:
             moments = cv2.moments(main_contour)
             centroid_x = int(moments['m10'] / (moments['m00'] or 1))
             centroid_y = int(moments['m01'] / (moments['m00'] or 1))
+
+            correction = pid(centroid_x)
+            print(f"Line center: [{centroid_x}] | PID: [{correction}] | ")
 
             frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
                 (0, 255, 0), 3)
