@@ -102,7 +102,6 @@ try:
 
         # Process frame using function
         processed, thresh = process_frame(frame)
-        # print(np.shape(frame))
         # processed, thresh, threshval = process_frame_otsu(frame)
         # print(threshval)
 
@@ -126,11 +125,6 @@ try:
             (0, 255, 0), 3)
         cv2.circle(frame_roi_w_contours, (centroid_x, centroid_y), 4,
             (255, 0, 0), 4)
-
-        # cv2.line(thresh, (left_line_x_pos, 0), (left_line_x_pos, cam_size_y),
-        #     (0, 0, 0), 1)
-        # cv2.line(thresh, (right_line_x_pos, 0), (right_line_x_pos, cam_size_y),
-        #     (0, 0, 0), 1)
 
         # Display the different frames
         # cv2.imshow('Original', frame)
