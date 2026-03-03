@@ -20,9 +20,6 @@ def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
-    ## Above line is commented out because OpenCV's contour detection expects
-    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh
 
@@ -42,9 +39,6 @@ def process_frame_adaptive(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
-    ## Above line is commented out because OpenCV's contour detection expects
-    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh
 
@@ -64,9 +58,6 @@ def process_frame_otsu(
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
-    # thresh = cv2.bitwise_not(thresh)  # make the colours normal again
-    ## Above line is commented out because OpenCV's contour detection expects
-    ## a white foreground object, which in our case is the black line
 
     return processed_gray, thresh, computed_thres_val
 
