@@ -1,6 +1,7 @@
 from typing import Union
 from gpiozero import Motor, PWMOutputDevice
 from numpy.typing import NDArray
+from cv2.typing import MatLike
 from picamera2 import Picamera2
 import numpy as np
 import libcamera
@@ -72,9 +73,7 @@ def stop_car():
     right_dir.stop()
 
 
-def process_frame(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -92,8 +91,7 @@ def process_frame(
 
 
 def process_frame_adaptive(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+        input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -114,7 +112,7 @@ def process_frame_adaptive(
 
 def process_frame_otsu(
     input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
+) -> tuple[MatLike, MatLike, Union[int, float]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -132,7 +130,7 @@ def process_frame_otsu(
     return processed_gray, thresh, computed_thres_val
 
 
-def find_main_countour(input_contours: tuple) -> NDArray[np.int_] | None:
+def find_main_countour(input_contours):
     ## modified from https://github.com/tprlab/pitanq-dev
     largest_contour = None
     if input_contours is not None and len(input_contours) > 0:
