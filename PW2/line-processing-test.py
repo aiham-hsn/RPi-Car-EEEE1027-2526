@@ -65,11 +65,14 @@ def process_frame_otsu(
     return processed_gray, thresh, computed_thres_val
 
 
+cam_size_x = 640
+cam_size_y = 480
+
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
     "format": "RGB888",
-    "size": (640, 480)
+    "size": (cam_size_x, cam_size_y)
     },
     transform=libcamera.Transform(hflip=1, vflip=1))  # type: ignore
 picam2.configure(config)
