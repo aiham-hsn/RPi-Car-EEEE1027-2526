@@ -81,9 +81,10 @@ time.sleep(2)
 
 print("Processing live feed. Press 'q' in the terminal window to quit.")
 
-roi_start_percent = 0.125
-left_line_x_pos = round(640 * roi_start_percent)
-right_line_x_pos = round(640 * (1 - roi_start_percent))
+# %age of the top half of the frame to discard to get the ROI
+frame_discard_percentage = 0.4
+# %age by which the ROI is being moved upwards
+frame_discard_offset = 0.125
 
 threshval = -1
 
@@ -94,18 +95,25 @@ try:
 
         # Process frame using function
         processed, thresh = process_frame(frame)
+        # print(np.shape(frame))
         # processed, thresh, threshval = process_frame_otsu(frame)
         # print(threshval)
 
-        cv2.line(thresh, (left_line_x_pos, 0), (left_line_x_pos, 480),
-            (255, 0, 0), 1)
-        cv2.line(thresh, (right_line_x_pos, 0), (right_line_x_pos, 480),
-            (255, 0, 0), 1)
+        # height, width = np.shape(thresh)
+
+        frame_roi = frame[int(cam_size_x *
+            (frame_discard_percentage - frame_discard_offset)):int(cam_size_x *
+            (1 - frame_discard_offset)):]
+        thresh_roi = thresh[int(cam_size_x *
+            (frame_discard_percentage - frame_discard_offset)):int(cam_size_x *
+            (1 - frame_discard_offset)):]
 
         # Display the different frames
         # cv2.imshow('Original', frame)
-        cv2.imshow('Pre-Processed (Gray + Blur)', processed)
+        # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         cv2.imshow('Thresholded', thresh)
+        cv2.imshow('Orignal ROI', frame_roi)
+        cv2.imshow('Thresholded ROI', thresh_roi)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
