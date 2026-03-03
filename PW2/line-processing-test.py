@@ -7,7 +7,9 @@ import cv2
 import time
 
 
-def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
+def process_frame(
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -24,7 +26,9 @@ def process_frame(input_frame: NDArray) -> tuple[NDArray, NDArray]:
     return processed_gray, thresh
 
 
-def process_frame_adaptive(input_frame: NDArray) -> tuple[NDArray, NDArray]:
+def process_frame_adaptive(
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -44,7 +48,8 @@ def process_frame_adaptive(input_frame: NDArray) -> tuple[NDArray, NDArray]:
 
 
 def process_frame_otsu(
-        input_frame: NDArray) -> tuple[NDArray, NDArray, Union[int, float]]:
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -62,7 +67,7 @@ def process_frame_otsu(
     return processed_gray, thresh, computed_thres_val
 
 
-def find_main_countour(input_contours):
+def find_main_countour(input_contours: tuple) -> NDArray[np.int_] | None:
     ## modified from https://github.com/tprlab/pitanq-dev
     largest_contour = None
     if input_contours is not None and len(input_contours) > 0:
