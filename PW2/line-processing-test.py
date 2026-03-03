@@ -126,8 +126,8 @@ try:
 
         if main_contour is not None:
             moments = cv2.moments(main_contour)
-            centroid_x = int(moments['m10'] / moments['m00'])
-            centroid_y = int(moments['m01'] / moments['m00'])
+            centroid_x = int(moments['m10'] / (moments['m00'] or 1))
+            centroid_y = int(moments['m01'] / (moments['m00'] or 1))
 
             frame_roi_w_contours = cv2.drawContours(frame_roi, main_contour, -1,
                 (0, 255, 0), 3)
