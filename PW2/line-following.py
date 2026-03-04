@@ -40,32 +40,10 @@ def set_duty_cycle_right(input: Union[int, float]) -> None:
         right_pwm.value = input
 
 
-def drive_fwd(ds: Union[int, float]):
-    set_duty_cycle_both(ds)
-    left_dir.forward()
-    right_dir.forward()
-
-
 def drive_bckwd(ds: Union[int, float]):
     set_duty_cycle_both(ds)
     left_dir.backward()
     right_dir.backward()
-
-
-def turn_right(duty_cycle_left: Union[int, float], duty_cycle_right: Union[int,
-    float]) -> None:
-    set_duty_cycle_left(duty_cycle_left)
-    set_duty_cycle_right(duty_cycle_right)
-    left_dir.forward()
-    right_dir.backward()
-
-
-def turn_left(duty_cycle_left: Union[int, float], duty_cycle_right: Union[int,
-    float]) -> None:
-    set_duty_cycle_left(duty_cycle_left)
-    set_duty_cycle_right(duty_cycle_right)
-    left_dir.backward()
-    right_dir.forward()
 
 
 def stop_car():
@@ -89,46 +67,6 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
     thresh = cv2.erode(thresh, kernel, iterations=1)
 
     return processed_gray, thresh
-
-
-def process_frame_adaptive(
-        input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
-    # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-    processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-
-    # Apply Gaussian blur
-    processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
-
-    # Apply an adaptive threshold to convert the image to
-    # pure black and pure white
-    thresh = cv2.adaptiveThreshold(processed_gray, 255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 45, 5)
-
-    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
-
-    return processed_gray, thresh
-
-
-def process_frame_otsu(
-    input_frame: NDArray[np.uint8]
-) -> tuple[MatLike, MatLike, Union[int, float]]:
-    # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-    processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-
-    # Apply Gaussian blur
-    processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
-
-    # Apply Otsu's Binarization to normal thresholding
-    computed_thres_val, thresh = cv2.threshold(
-        processed_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
-
-    return processed_gray, thresh, computed_thres_val
 
 
 def find_main_countour(input_contours):
