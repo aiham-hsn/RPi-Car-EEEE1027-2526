@@ -182,6 +182,8 @@ try:
                 (255, 0, 0), 4)
             cv2.circle(frame_roi_w_contours, (int(pid_out), centroid_y), 4,
                 (255, 0, 250), 4)
+        else:
+            stop_car()
 
         # Display the different frames
         # cv2.imshow('Original', frame)
