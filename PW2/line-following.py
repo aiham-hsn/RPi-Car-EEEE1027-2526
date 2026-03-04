@@ -219,7 +219,7 @@ try:
             centroid_x = int(moments['m10'] / (moments['m00'] or 1))
             centroid_y = int(moments['m01'] / (moments['m00'] or 1))
 
-            pid_out = pid(centroid_x)
+            pid_out = pid(centroid_x) or (cam_size_x / 2)
             correction = (
                 (pid_out - (cam_size_x / 2)) / 4
             ) / 100  # Div by 4 to scale values down, div by 100 to convert to decimal percentage
