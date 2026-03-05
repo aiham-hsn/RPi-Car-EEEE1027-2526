@@ -104,16 +104,6 @@ def process_frame_otsu(
     return processed_gray, thresh, computed_thres_val  # pyright: ignore[reportReturnType]
 
 
-def find_main_countour(input_contours):
-    ## modified from https://github.com/tprlab/pitanq-dev
-    largest_contour = None
-    if input_contours is not None and len(input_contours) > 0:
-        largest_contour = max(input_contours, key=cv2.contourArea)
-    if largest_contour is None:
-        return None
-    return largest_contour
-
-
 cam_size_x = 640
 cam_size_y = 480
 
