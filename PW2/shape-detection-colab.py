@@ -15,6 +15,7 @@ def classify_shape(cnt):
 
     # math time
     circularity = 4 * np.pi * area / (peri * peri)
+    epsilon = 0.03
 
     hull = cv2.convexHull(cnt)
     hull_area = cv2.contourArea(hull)
@@ -23,7 +24,7 @@ def classify_shape(cnt):
     x, y, w, h = cv2.boundingRect(cnt)
     extent = area / (w * h) if (w * h) > 0 else 0
 
-    approx = cv2.approxPolyDP(cnt, SHAPE_POLY_EPSILON * peri, True)
+    approx = cv2.approxPolyDP(cnt, epsilon * peri, True)
     vertices = len(approx)
 
     # dented
@@ -89,6 +90,7 @@ def detect_shapes(frame):
     hsv = cv2.cvtColor(frame, cv2.COLOR_RGB2HSV)
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     detected = []
+    mask = None
 
     for colour_name, ranges in SHAPE_COLOR_RANGES.items():
         mask = None
@@ -110,8 +112,8 @@ def detect_shapes(frame):
             shape = classify_shape(cnt)
 
             x, y, w, h = cv2.boundingRect(cnt)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
-            label = f"{colour_name} {shape}"
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            label = f"{shape}"
             cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX,
                 0.5, (255, 0, 0), 2)
 
@@ -122,7 +124,7 @@ def detect_shapes(frame):
                 "area": area
             })
 
-    return frame, detected
+    return frame, detected, mask
 
 
 cam_size_x = 640
@@ -155,9 +157,9 @@ SHAPE_COLOR_RANGES = {
     "Red": [(np.array([0, 100, 100]), np.array([10, 255, 255])),
     (np.array([160, 100, 100]), np.array([179, 255, 255]))],
     "Orange": [(np.array([10, 100, 100]), np.array([20, 255, 255]))],
-    "Yellow": [(np.array([20, 100, 100]), np.array([35, 255, 255]))],
+    "Yellow": [(np.array([25, 100, 100]), np.array([35, 255, 255]))],
     "Green": [(np.array([35, 50, 50]), np.array([85, 255, 255]))],
-    "Teal": [(np.array([85, 50, 50]), np.array([100, 255, 255]))],
+    "Teal": [(np.array([85, 45, 80]), np.array([100, 255, 255]))],
     "Blue": [(np.array([100, 100, 50]), np.array([130, 255, 255]))],
     "Purple": [(np.array([130, 50, 50]), np.array([160, 255, 255]))],
 }
@@ -168,20 +170,20 @@ try:
         frame = picam2.capture_array()
         vis = frame.copy()
 
-        vis, shapes = detect_shapes(vis)
+        vis, shapes, mask = detect_shapes(vis)
         if shapes:
             for s in shapes:
                 print(f"  [SHAPE] {s['colour']} {s['shape']} "
                     f"(area={s['area']})")
 
-        cv2.imshow("Detection", vis)
+        cv2.imshow('Mask', mask)
+        cv2.imshow('Shape Detect', vis)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
         time.sleep(0.05)
 
-        cv2.imshow('Shape/Arrow Detect', vis)
 except KeyboardInterrupt:
     print("\nKeyboard interrupt detected, stopping program...")
 finally:
