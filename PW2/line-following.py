@@ -62,12 +62,32 @@ def process_frame(
     processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
 
     # Just use normal thresholding
-    _, thresh = cv2.threshold(processed_gray, 145, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(processed_gray, 160, 255, cv2.THRESH_BINARY_INV)
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
 
     return processed_gray, thresh
+
+
+def process_frame_otsu(
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
+    # Convert input frame to grayscale
+    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
+    processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
+
+    # Apply Gaussian blur
+    processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
+
+    # Apply Otsu's Binarization to normal thresholding
+    computed_thres_val, thresh = cv2.threshold(
+        processed_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
+    thresh = cv2.erode(thresh, kernel, iterations=1)
+
+    return processed_gray, thresh, computed_thres_val
 
 
 def find_main_countour(input_contours):
@@ -100,9 +120,9 @@ left_pwm = PWMOutputDevice(ENA, frequency=1000)
 right_pwm = PWMOutputDevice(ENB, frequency=1000)
 
 pid = PID(
-    Kp=0.8,
-    Ki=0.03,
-    Kd=0.35,
+    Kp=0.5,
+    Ki=0.1,
+    Kd=0.1,
     setpoint=(cam_size_x / 2),
     sample_time=0.01,
     output_limits=(0, cam_size_x),
@@ -122,12 +142,12 @@ time.sleep(2)
 print("Processing live feed. Press 'q' in the terminal window to quit.")
 
 # %age of the top half of the frame to discard to get the ROI
-frame_discard_percentage = 0.4
+frame_discard_percentage = 0.3
 # %age by which the ROI is being moved upwards
 frame_discard_offset = 0.125
 
 threshval = -1
-BASE_SPEED = 0.65
+BASE_SPEED = 0.30
 
 try:
     while True:
@@ -136,8 +156,8 @@ try:
 
         # Process frame using function
         processed, thresh = process_frame(frame)
-        # processed, thresh, threshval = process_frame_otsu(frame)
-        # print(threshval)
+        #processed, thresh, threshval = process_frame_otsu(frame)
+        #print(f"Computed Thresh Val: [{threshval}]")
 
         height, width = np.shape(thresh)
 
@@ -160,7 +180,7 @@ try:
 
             pid_out = pid(centroid_x) or (cam_size_x / 2)
             correction = (
-                (pid_out - (cam_size_x / 2)) / 4
+                (pid_out - (cam_size_x / 2)) / 3.5
             ) / 100  # Div by 4 to scale values down, div by 100 to convert to decimal percentage
             # print(
             #     f"Line center: [{centroid_x}] | PID: [{pid_out:.2f}] | Corr: [{correction:.2f}]"
@@ -188,8 +208,8 @@ try:
 
         # Display the different frames
         # cv2.imshow('Original', frame)
-        # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
-        # cv2.imshow('Thresholded', thresh)
+        cv2.imshow('Pre-Processed (Gray + Blur)', processed)
+        cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
         cv2.imshow('ROI w/ contours', frame_roi_w_contours)
