@@ -1,14 +1,15 @@
 from picamera2 import Picamera2
 from typing import Union
 from numpy.typing import NDArray
-from cv2.typing import MatLike
 import numpy as np
 import libcamera
 import cv2
 import time
 
 
-def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
+def process_frame(
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -17,7 +18,7 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
     processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
 
     # Just use normal thresholding
-    _, thresh = cv2.threshold(processed_gray, 145, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(processed_gray, 191, 255, cv2.THRESH_BINARY_INV)
 
     kernel = np.ones((7, 7), np.uint8)  # for morphology operations
     thresh = cv2.erode(thresh, kernel, iterations=1)
@@ -26,7 +27,8 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
 
 
 def process_frame_adaptive(
-        input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -47,7 +49,7 @@ def process_frame_adaptive(
 
 def process_frame_otsu(
     input_frame: NDArray[np.uint8]
-) -> tuple[MatLike, MatLike, Union[int, float]]:
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -104,9 +106,9 @@ try:
         frame = picam2.capture_array()
 
         # Process frame using function
-        processed, thresh = process_frame(frame)
-        # processed, thresh, threshval = process_frame_otsu(frame)
-        # print(threshval)
+        # processed, thresh = process_frame(frame)
+        processed, thresh, threshval = process_frame_otsu(frame)
+        print(f"Computed Thresh Val: [{threshval}]")
 
         height, width = np.shape(thresh)
 

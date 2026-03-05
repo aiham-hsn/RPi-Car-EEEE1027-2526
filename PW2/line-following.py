@@ -1,6 +1,5 @@
 from typing import Union
 from numpy.typing import NDArray
-from cv2.typing import MatLike
 from gpiozero import Motor, PWMOutputDevice
 from picamera2 import Picamera2
 from simple_pid import PID
@@ -52,7 +51,9 @@ def stop_car():
     right_dir.stop()
 
 
-def process_frame(input_frame: NDArray[np.uint8]) -> tuple[MatLike, MatLike]:
+def process_frame(
+    input_frame: NDArray[np.uint8]
+) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
