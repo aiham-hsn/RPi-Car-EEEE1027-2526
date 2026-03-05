@@ -167,6 +167,7 @@ threshval = -1
 drive_fwd(0.4)
 time.sleep(0.2)
 
+start_time = time.time()
 last_time = time.time()
 try:
     while True:
@@ -210,25 +211,29 @@ try:
             set_duty_cycle_right(rs)
             left_dir.forward()
             right_dir.forward()
-            print(
-                f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}]"
-            )
+            #print(
+            #    f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}]"
+            #)
         else:
             stop_car()
-            drive_bckwd(0.6)
-            time.sleep(0.2)
+            set_duty_cycle_left(1)
+            set_duty_cycle_right(0.3)
+            left_dir.backward()
+            right_dir.backward()
+            time.sleep(0.4)
+            # TODO: change the direction the backwards movement is biased based on which direction it was trying to turn
             stop_car()
 
         # Display the different frames
         # cv2.imshow('Original', frame)
-        cv2.imshow('Pre-Processed (Gray + Blur)', processed)
-        cv2.imshow('Thresholded', thresh)
+        # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
+        # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
-        cv2.imshow(
-            'ROI w/ contours',
-            frame_roi_w_points  # pyright: ignore[reportPossiblyUnboundVariable]
-        )
+        # cv2.imshow(
+        #     'ROI w/ contours',
+        #     frame_roi_w_points  # pyright: ignore[reportPossiblyUnboundVariable]
+        # )
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -238,3 +243,4 @@ finally:
     stop_car()
     picam2.stop()
     cv2.destroyAllWindows()
+    print(f"\n\nTIme Taken : [{time.time() - start_time}]")
