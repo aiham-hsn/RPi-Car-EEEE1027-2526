@@ -142,7 +142,7 @@ class ownPID:
 
 
 pid = ownPID(0.5, 0.01, 0.05)
-BASE_SPEED = 0.45
+BASE_SPEED = 0.55
 MIN_SPEED = 0.30
 
 picam2 = Picamera2()
@@ -227,18 +227,18 @@ try:
             turn_sign = copysign(1, spd_diff)
             match turn_sign:
                 case 1:
-                    set_duty_cycle_left(0.3)
-                    set_duty_cycle_right(1)
-                    print("Going backwards, right")
+                    set_duty_cycle_left(0)
+                    set_duty_cycle_right(0.8)
+                    # print("Going backwards, right")
                 case -1:
-                    set_duty_cycle_left(1)
-                    set_duty_cycle_right(0.3)
-                    print("Going backwards, left")
+                    set_duty_cycle_left(0.8)
+                    set_duty_cycle_right(0)
+                    # print("Going backwards, left")
                 case _:
                     set_duty_cycle_both(0.6)
             left_dir.backward()
             right_dir.backward()
-            time.sleep(0.4)
+            time.sleep(0.2)
             stop_car()
 
         # Display the different frames
