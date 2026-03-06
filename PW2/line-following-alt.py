@@ -194,7 +194,9 @@ try:
             (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
 
-        ptsb = np.where(frame_roi < 50)[1]
+        # ptsb = np.where(frame_roi < 50)[1]
+        ptsb = np.where(thresh_roi > 128)[1]
+        # ptsb = np.where(proc < 50)[1]
         if ptsb.size:
             center = int(np.mean(ptsb))
             pid_out = pid.update(center, dt)
