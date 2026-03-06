@@ -6,6 +6,7 @@ import numpy as np
 import libcamera
 import cv2
 import time
+from math import copysign
 
 
 def set_duty_cycle_both(input: Union[int, float]) -> None:
@@ -163,6 +164,9 @@ frame_discard_percentage = 0.3
 frame_discard_offset = 0.125
 
 threshval = -1
+global last_left_spd, last_right_spd, spd_diff
+last_left_spd = last_right_spd = BASE_SPEED
+spd_diff = 0
 
 drive_fwd(0.4)
 time.sleep(0.2)
@@ -207,23 +211,34 @@ try:
                 (center, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
             #ls = max(min(BASE_SPEED - corr, MIN_SPEED), 0)
             #rs = max(min(BASE_SPEED + corr, MIN_SPEED), 0)
-            ls = max((BASE_SPEED - corr), 0)
-            rs = max((BASE_SPEED + corr), 0)
+            ls = last_left_spd = max((BASE_SPEED - corr), 0)
+            rs = last_right_spd = max((BASE_SPEED + corr), 0)
             set_duty_cycle_left(ls)
             set_duty_cycle_right(rs)
             left_dir.forward()
             right_dir.forward()
             #print(
-            #    f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}]"
+            #    f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
             #)
         else:
             stop_car()
-            set_duty_cycle_left(1)
-            set_duty_cycle_right(0.3)
+            spd_diff = last_left_spd - last_right_spd  # +ve when supposed to take a right turn, -ve when supposed to take a left turn
+            # print(f"Speed diff: [{spd_diff}]")
+            turn_sign = copysign(1, spd_diff)
+            match turn_sign:
+                case 1:
+                    set_duty_cycle_left(0.3)
+                    set_duty_cycle_right(1)
+                    print("Going backwards, right")
+                case -1:
+                    set_duty_cycle_left(1)
+                    set_duty_cycle_right(0.3)
+                    print("Going backwards, left")
+                case _:
+                    set_duty_cycle_both(0.6)
             left_dir.backward()
             right_dir.backward()
             time.sleep(0.4)
-            # TODO: change the direction the backwards movement is biased based on which direction it was trying to turn
             stop_car()
 
         # Display the different frames
