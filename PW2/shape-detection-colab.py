@@ -64,7 +64,7 @@ VALID_DETECTIONS = {
     ("Orange",  "Cross"),
     ("Purple",  "Trapezoid"),
     ("Blue",    "Pac-Man"),
-    ("Red",     "Major Segment"),
+    ("Red",     "Semi-circle"),
     ("Teal",    "Octagon"),
 }
 
@@ -217,7 +217,7 @@ def classify_shape(cnt):
         # only fires if it wasn't caught as a 4-sided shape above
         # aspect_ratio check removed — shape lies on floor so orientation varies
         if 0.50 <= circularity <= 0.82 and vertices >= 4:
-            return "Major Segment"
+            return "Semi-circle"
 
     # triangle: pointy, few vertices, not very full
     if 3 <= vertices <= 4 and solidity > 0.80 and circularity < 0.65:
@@ -292,9 +292,9 @@ def detect_shapes(frame):
     for det in stable:
         x, y, w, h = det["bbox"]
         label = f"{det['colour']} {det['shape']}"
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 255), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 128, 255), 2)
         cv2.putText(frame, label, (x, y - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 0, 0), 2)
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (15, 64, 255), 2)
 
     return frame, stable
 
@@ -314,19 +314,21 @@ if __name__ == "__main__":
     picam2.configure(cfg)
     picam2.start()
     time.sleep(1)
+    try:
+        while True:
+            frame = picam2.capture_array()
 
-    while True:
-        frame = picam2.capture_array()
+            vis, shapes = detect_shapes(frame.copy())
 
-        vis, shapes = detect_shapes(frame.copy())
+            for s in shapes:
+                # print(f"  [SHAPE] {s['colour']} {s['shape']} (area={s['area']:.0f})")
+                print(f" Currently Detecting a {s['colour']} {s['shape']}")
+            cv2.imshow("Preview", cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
 
-        for s in shapes:
-            print(f"  [SHAPE] {s['colour']} {s['shape']} (area={s['area']:.0f})")
-
-        cv2.imshow("Shape Detector", cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-    picam2.stop()
-    cv2.destroyAllWindows()
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+    except KeyboardInterrupt:
+        print("\nKeyboard interrupt detected, stopping program...")
+    finally:
+        picam2.stop()
+        cv2.destroyAllWindows()
