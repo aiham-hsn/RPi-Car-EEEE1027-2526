@@ -85,26 +85,6 @@ def process_frame_alt(frame):
     return cv2.bitwise_not(er)
 
 
-def process_frame_otsu(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
-    # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-    processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-
-    # Apply Gaussian blur
-    processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
-
-    # Apply Otsu's Binarization to normal thresholding
-    computed_thres_val, thresh = cv2.threshold(
-        processed_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
-
-    return processed_gray, thresh, computed_thres_val  # pyright: ignore[reportReturnType]
-
-
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
     contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
@@ -207,8 +187,6 @@ try:
         # Process frame using function
         processed, thresh = process_frame(frame)
         # proc = process_frame_alt(frame)
-        #processed, thresh, threshval = process_frame_otsu(frame)
-        #print(f"Computed Thresh Val: [{threshval}]")
 
         height, width = np.shape(thresh)
 
