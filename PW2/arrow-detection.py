@@ -138,9 +138,10 @@ try:
         #    area = cv2.contourArea(cnt)
         #    print(f'Contour {idx} Area : {area}')
         detected_arrow = 'None'
+        arrow_area=0
         for cnt in contours:
             area = cv2.contourArea(cnt)
-            if 1000 < area < 15000:
+            if 1000 < area < 15600:
                 hull = cv2.convexHull(cnt)
                 solidity = float(area) / cv2.contourArea(
                     hull) if cv2.contourArea(hull) > 0 else 0
@@ -150,11 +151,27 @@ try:
                     if M["m00"] > 0:
                         cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] /
                                                                M["m00"])
+                        cv2.circle(
+                            frame_roi_w_contours,
+                            (cX, cY),
+                            4,
+                            (255, 0, 0),
+                            4
+                        )
                         bX, bY = x + (w / 2), y + (h / 2)
+                        cv2.circle(
+                            frame_roi_w_contours,
+                            (int(bX), int(bY)),
+                            4,
+                            (0, 255, 0),
+                            4
+                        )
                         if abs(cX - bX) > abs(cY - bY):
                             detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
+                            arrow_area = area
                         else:
                             detected_arrow = "Arrow Down" if cY > bY else "Arrow Up"
+                            arrow_area = area
                         break
                     else:
                         detected_arrow = 'None'
@@ -162,7 +179,7 @@ try:
                     detected_arrow = 'None'
             else:
                 detected_arrow = 'None'
-        print(f'Currently Detected Arrow : {detected_arrow}')
+        print(f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}')
 
         # Display the different frames
         # cv2.imshow('Original', frame)
@@ -170,10 +187,10 @@ try:
         # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
-        # cv2.imshow(
-        #     'ROI w/ contours',
-        #     frame_roi_w_contours # pyright: ignore[reportPossiblyUnboundVariable]
-        # )
+        cv2.imshow(
+            'ROI w/ contours',
+            frame_roi_w_contours # pyright: ignore[reportPossiblyUnboundVariable]
+        )
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
