@@ -226,7 +226,7 @@ try:
             cent_x, cent_y = calc_centroid(main_contour)
             pid_out = pid.update(cent_x, dt)
             corr = (pid_out) / (100 * 2)
-            #print(f"type(center) : [{type(center)}]")
+            #print(f"type(cent_x) : [{type(cent_x)}]")
 
             frame_roi_w_points = cv2.circle(frame_roi,
                 (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
@@ -239,7 +239,7 @@ try:
             left_dir.forward()
             right_dir.forward()
             #print(
-            #    f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
+            #    f"Line cent_x: [{cent_x}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
             #)
         else:
             stop_car()
