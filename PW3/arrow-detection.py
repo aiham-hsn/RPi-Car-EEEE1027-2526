@@ -27,35 +27,6 @@ def process_frame(
     return processed_gray, thresh  # pyright: ignore[reportReturnType]
 
 
-def process_frame_alt(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
-    inv = cv2.bitwise_not(binary)
-    kern = np.ones((5, 5), np.uint8)
-    er = cv2.erode(inv, kern, iterations=1)
-    return cv2.bitwise_not(er)
-
-
-def process_frame_otsu(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8], Union[int, float]]:
-    # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-    processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
-
-    # Apply Gaussian blur
-    processed_gray = cv2.GaussianBlur(processed_gray, (7, 7), 0)
-
-    # Apply Otsu's Binarization to normal thresholding
-    computed_thres_val, thresh = cv2.threshold(
-        processed_gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-
-    kernel = np.ones((7, 7), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
-
-    return processed_gray, thresh, computed_thres_val  # pyright: ignore[reportReturnType]
-
-
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
     contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
@@ -99,24 +70,13 @@ frame_discard_percentage = 0.3
 # %age by which the ROI is being moved upwards
 frame_discard_offset = 0.125
 
-threshval = -1
-
-start_time = time.time()
-last_time = time.time()
 try:
     while True:
         # Capture a still frame from the camera
         frame = picam2.capture_array()
 
-        now = time.time()
-        dt = now - last_time
-        last_time = now
-
         # Process frame using function
         processed, thresh = process_frame(frame)
-        # proc = process_frame_alt(frame)
-        #processed, thresh, threshval = process_frame_otsu(frame)
-        #print(f"Computed Thresh Val: [{threshval}]")
 
         height, width = np.shape(thresh)
 
@@ -129,7 +89,7 @@ try:
                                               1 - frame_discard_offset)):]
 
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL,
-                                               cv2.CHAIN_APPROX_SIMPLE)
+            cv2.CHAIN_APPROX_SIMPLE)
         # Draw contours onto frame ROI
         cv2.drawContours(frame_roi_w_contours, contours, -1, (0, 255, 0), 3)
 
@@ -138,7 +98,7 @@ try:
         #    area = cv2.contourArea(cnt)
         #    print(f'Contour {idx} Area : {area}')
         detected_arrow = 'None'
-        arrow_area=0
+        arrow_area = 0
         for cnt in contours:
             area = cv2.contourArea(cnt)
             if 1000 < area < 15600:
@@ -150,22 +110,12 @@ try:
                     M = cv2.moments(cnt)
                     if M["m00"] > 0:
                         cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] /
-                                                               M["m00"])
-                        cv2.circle(
-                            frame_roi_w_contours,
-                            (cX, cY),
-                            4,
-                            (255, 0, 0),
-                            4
-                        )
+                            M["m00"])
+                        cv2.circle(frame_roi_w_contours, (cX, cY), 4,
+                            (255, 0, 0), 4)
                         bX, bY = x + (w / 2), y + (h / 2)
-                        cv2.circle(
-                            frame_roi_w_contours,
-                            (int(bX), int(bY)),
-                            4,
-                            (0, 255, 0),
-                            4
-                        )
+                        cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4,
+                            (0, 255, 0), 4)
                         if abs(cX - bX) > abs(cY - bY):
                             detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
                             arrow_area = area
@@ -179,7 +129,9 @@ try:
                     detected_arrow = 'None'
             else:
                 detected_arrow = 'None'
-        print(f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}')
+        print(
+            f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}'
+        )
 
         # Display the different frames
         # cv2.imshow('Original', frame)
@@ -189,7 +141,7 @@ try:
         # cv2.imshow('Thresholded ROI', thresh_roi)
         cv2.imshow(
             'ROI w/ contours',
-            frame_roi_w_contours # pyright: ignore[reportPossiblyUnboundVariable]
+            frame_roi_w_contours  # pyright: ignore[reportPossiblyUnboundVariable]
         )
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -199,4 +151,3 @@ except KeyboardInterrupt:
 finally:
     picam2.stop()
     cv2.destroyAllWindows()
-    print(f"\n\nTIme Taken : [{time.time() - start_time}]")
