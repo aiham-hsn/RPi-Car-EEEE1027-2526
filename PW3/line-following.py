@@ -105,6 +105,28 @@ def process_frame_otsu(
     return processed_gray, thresh, computed_thres_val  # pyright: ignore[reportReturnType]
 
 
+def thresh2maincontour(threshhold):
+    # Get contours from threshhold
+    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
+        cv2.CHAIN_APPROX_SIMPLE)
+
+    # Find and return main contour
+    ## modified from https://github.com/tprlab/pitanq-dev
+    largest_contour = None
+    if contours is not None and len(contours) > 0:
+        largest_contour = max(contours, key=cv2.contourArea)
+    if largest_contour is None:
+        return None
+    return largest_contour
+
+
+def calc_centroid(main_cnt):
+    moments = cv2.moments(main_cnt)
+    centroid_x = int(moments['m10'] / (moments['m00'] or 1))
+    centroid_y = int(moments['m01'] / (moments['m00'] or 1))
+    return centroid_x, centroid_y
+
+
 cam_size_x = 640
 cam_size_y = 480
 
@@ -184,7 +206,7 @@ try:
 
         # Process frame using function
         processed, thresh = process_frame(frame)
-        proc = process_frame_alt(frame)
+        # proc = process_frame_alt(frame)
         #processed, thresh, threshval = process_frame_otsu(frame)
         #print(f"Computed Thresh Val: [{threshval}]")
 
@@ -198,17 +220,16 @@ try:
             (frame_discard_percentage - frame_discard_offset)):int(height *
             (1 - frame_discard_offset)):]
 
-        ptsb = np.where(frame_roi < 50)[1]
-        # ptsb = np.where(thresh_roi > 128)[1]
-        # ptsb = np.where(proc < 50)[1]
-        if ptsb.size:
-            center = int(np.mean(ptsb))
-            pid_out = pid.update(center, dt)
+        main_contour = thresh2maincontour(thresh_roi)
+
+        if main_contour is not None:
+            cent_x, cent_y = calc_centroid(main_contour)
+            pid_out = pid.update(cent_x, dt)
             corr = (pid_out) / (100 * 2)
-            #print(f"type(center) : [{type(center)}]")
+            #print(f"type(cent_x) : [{type(cent_x)}]")
 
             frame_roi_w_points = cv2.circle(frame_roi,
-                (center, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
+                (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
             #ls = max(min(BASE_SPEED - corr, MIN_SPEED), 0)
             #rs = max(min(BASE_SPEED + corr, MIN_SPEED), 0)
             ls = last_left_spd = max((BASE_SPEED - corr), 0)
@@ -218,7 +239,7 @@ try:
             left_dir.forward()
             right_dir.forward()
             #print(
-            #    f"Line center: [{center}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
+            #    f"Line cent_x: [{cent_x}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
             #)
         else:
             stop_car()
