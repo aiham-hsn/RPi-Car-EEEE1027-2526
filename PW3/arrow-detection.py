@@ -69,7 +69,7 @@ frame_discard_percentage = 0.3
 # %age by which the ROI is being moved upwards
 frame_discard_offset = 0.125
 
-BLACK_RANGE = [(0, 0, 0), (131, 17, 31)]
+BLACK_RANGE = [(0, 0, 0), (180, 80, 110)]
 
 try:
     while True:
