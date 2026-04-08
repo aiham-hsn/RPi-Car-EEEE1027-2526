@@ -57,9 +57,7 @@ def stop_car():
     right_dir.stop()
 
 
-def process_frame(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -87,8 +85,7 @@ def process_frame_alt(frame):
 
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
-    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find and return main contour
     ## modified from https://github.com/tprlab/pitanq-dev
@@ -192,12 +189,10 @@ try:
         height, width = np.shape(thresh)
 
         frame_roi = frame[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
         #frame_roi_w_contours = frame_roi
         thresh_roi = thresh[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
 
         main_contour = thresh2maincontour(thresh_roi)
 
@@ -207,8 +202,7 @@ try:
             corr = (pid_out) / (100 * 2)
             #print(f"type(cent_x) : [{type(cent_x)}]")
 
-            frame_roi_w_points = cv2.circle(frame_roi,
-                (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
+            frame_roi_w_points = cv2.circle(frame_roi, (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
             #ls = max(min(BASE_SPEED - corr, MIN_SPEED), 0)
             #rs = max(min(BASE_SPEED + corr, MIN_SPEED), 0)
             ls = last_left_spd = max((BASE_SPEED - corr), 0)
