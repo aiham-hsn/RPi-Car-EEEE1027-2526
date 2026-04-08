@@ -141,8 +141,11 @@ frame_discard_percentage = 0.3
 # %age by which the ROI is being moved upwards
 frame_discard_offset = 0.125
 
+last_time = time.time()
 try:
     while True:
+        now = time.time()
+
         # Capture a still frame from the camera
         frame = picam2.capture_array()
 
@@ -163,7 +166,9 @@ try:
         colour_present, colour_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
         if colour_present:
             thresh_roi = cv2.bitwise_and(thresh_roi, colour_mask)
-        print(f"Colour present? : [{colour_present}]")
+        if (now - last_time) > 3:
+            last_time = time.time()
+            print(f"Colour present? : [{colour_present}]")
 
         main_contour = thresh2maincontour(thresh_roi)
 
@@ -174,7 +179,7 @@ try:
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         # cv2.imshow('Thresholded', thresh)
-        cv2.imshow('Orignal ROI', frame_roi)
+        # cv2.imshow('Orignal ROI', frame_roi)
         cv2.imshow('Thresholded ROI', thresh_roi)
         cv2.imshow(
             'ROI w/ contours',
