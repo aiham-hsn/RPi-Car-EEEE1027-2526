@@ -150,6 +150,7 @@ MIN_SPEED = 0.30
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
+    # the RGB888 format has 24 bits per pixel, ordered [B, G, R]
     "format": "RGB888",
     "size": (cam_size_x, cam_size_y)
     },
