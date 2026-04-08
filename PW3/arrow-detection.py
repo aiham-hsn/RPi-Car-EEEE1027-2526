@@ -139,6 +139,7 @@ try:
         # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
+        # cv2.imshow('Black Mask', black_mask)
         cv2.imshow(
             'ROI w/ contours',
             frame_roi_w_contours  # pyright: ignore[reportPossiblyUnboundVariable]
