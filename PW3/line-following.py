@@ -59,7 +59,6 @@ def stop_car():
 
 def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
 
     # Apply Gaussian blur
@@ -68,19 +67,18 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], ND
     # Just use normal thresholding
     _, thresh = cv2.threshold(processed_gray, 160, 255, cv2.THRESH_BINARY_INV)
 
-    kernel = np.ones((5, 5), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
+    # Apply morphology operations
+    thresh = process_frame_morphology_ops(thresh)
 
     return processed_gray, thresh  # pyright: ignore[reportReturnType]
 
 
-def process_frame_alt(frame):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    _, binary = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
-    inv = cv2.bitwise_not(binary)
-    kern = np.ones((5, 5), np.uint8)
-    er = cv2.erode(inv, kern, iterations=1)
-    return cv2.bitwise_not(er)
+def process_frame_morphology_ops(input_thresh):
+    # Create kernel for morphology operations
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    out_thresh = cv2.erode(input_thresh, kernel, iterations=1)
+
+    return out_thresh
 
 
 def thresh2maincontour(threshhold):
@@ -102,6 +100,60 @@ def calc_centroid(main_cnt):
     centroid_x = int(moments['m10'] / (moments['m00'] or 1))
     centroid_y = int(moments['m01'] / (moments['m00'] or 1))
     return centroid_x, centroid_y
+
+
+def detect_colored_line(raw_frame, colour):
+    hsv = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)
+    if colour == "black":
+        return False, None, None
+
+    ylw_low, ylw_high = COLOUR_RANGES['yellow']
+    ylw_mask = cv2.inRange(hsv, np.array(ylw_low), np.array(ylw_high))
+
+    red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
+    red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
+    red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
+    red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
+    red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
+
+    match colour:
+        case "yellow":
+            accept_mask = process_frame_morphology_ops(ylw_mask)
+            reject_mask = process_frame_morphology_ops(red_mask)
+            colour_present = np.count_nonzero(accept_mask) > 0
+            return colour_present, accept_mask, reject_mask
+        case "red":
+            accept_mask = process_frame_morphology_ops(red_mask)
+            reject_mask = process_frame_morphology_ops(ylw_mask)
+            colour_present = np.count_nonzero(accept_mask) > 0
+            return colour_present, accept_mask, reject_mask
+        case "both":
+            both_mask = cv2.bitwise_or(ylw_mask, red_mask)
+            both_mask = process_frame_morphology_ops(both_mask)
+            colour_present = np.count_nonzero(both_mask) > 0
+            return colour_present, both_mask, None
+        case _:
+            raise ValueError(f"Unknown value for input value \"colour\" [{colour}]")
+
+
+def linefollowing_colourchoice() -> str:
+    options = {
+        '1': ('black', 'Black line only'),
+        '2': ('red', 'Red line or black line'),
+        '3': ('yellow', 'Yellow line or black line'),
+        '4': ('both', 'Red or yellow or black line'),
+    }
+    print("Select line colour(s) to follow.\nOptions:")
+    for key, (_, desc) in options.items():
+        print(f"{key} : {desc}")
+
+    while True:
+        raw = input("\nEnter choice [1-4]: ").strip()
+        if raw in options:
+            color, desc = options[raw]
+            print(f"Line following colour choice set to: [{desc}]\n")
+            return color
+        print(f"  Invalid choice {raw!r} — please enter 1, 2, 3, or 4.")
 
 
 cam_size_x = 640
@@ -143,6 +195,16 @@ class ownPID:
 pid = ownPID(0.5, 0.01, 0.05)
 BASE_SPEED = 0.55
 MIN_SPEED = 0.30
+
+global COLOUR_RANGES, PRIORITY_COLOUR
+COLOUR_RANGES = {
+    "red": {
+    "top": [(170, 150, 100), (180, 255, 255)],
+    "btm": [(0, 150, 100), (10, 255, 255)],
+    },
+    "yellow": [(20, 190, 190), (30, 255, 255)],
+}
+PRIORITY_COLOUR = linefollowing_colourchoice()
 
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
@@ -193,6 +255,19 @@ try:
         #frame_roi_w_contours = frame_roi
         thresh_roi = thresh[int(height *
             (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+
+        colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
+
+        if colour_present:
+            if (now - last_time) > 2:
+                last_time = time.time()
+                print(f"Colour present? : [{colour_present}]")
+            thresh_roi = cv2.bitwise_and(
+                thresh_roi, accept_mask)  # pyright: ignore[reportArgumentType, reportCallIssue]
+        if reject_mask is not None:
+            thresh_roi = cv2.subtract(thresh_roi, reject_mask)
+
+        thresh_roi = process_frame_morphology_ops(thresh_roi)
 
         main_contour = thresh2maincontour(thresh_roi)
 
