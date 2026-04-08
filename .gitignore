@@ -182,3 +182,4 @@ pyrightconfig.json
 **/colour_ranges*.json
 **/*.json
 **/threshval-calib-outframe-*.jpg
+**/*-n-black-track-*.jpg
