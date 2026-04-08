@@ -120,15 +120,15 @@ def linefollowing_colourchoice() -> str:
 cam_size_x = 640
 cam_size_y = 480
 
-global COLOUR_RANGES, PRIORITY_COLOR
+global COLOUR_RANGES, PRIORITY_COLOUR
 COLOUR_RANGES = {
     "red": {
     "top": [(170, 150, 100), (180, 255, 255)],
     "btm": [(0, 150, 100), (10, 255, 255)],
     },
-    "yellow": [(18, 100, 100), (35, 255, 255)],
+    "yellow": [(20, 190, 190), (30, 255, 255)],
 }
-# PRIORITY_COLOR = linefollowing_colourchoice()
+PRIORITY_COLOUR = linefollowing_colourchoice()
 
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
@@ -169,7 +169,8 @@ try:
             (1 - frame_discard_offset)):]
 
         # Check for colour in the ROI
-        colour_present, colour_mask = detect_colored_line(frame_roi, 'both')
+        # colour_present, colour_mask = detect_colored_line(frame_roi, 'both')
+        colour_present, colour_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
         if colour_present:
             thresh_roi = cv2.bitwise_and(thresh_roi, colour_mask)
         print(f"Colour present? : [{colour_present}]")
@@ -184,7 +185,7 @@ try:
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         # cv2.imshow('Thresholded', thresh)
-        # cv2.imshow('Orignal ROI', frame_roi)
+        cv2.imshow('Orignal ROI', frame_roi)
         cv2.imshow('Thresholded ROI', thresh_roi)
         cv2.imshow(
             'ROI w/ contours',
