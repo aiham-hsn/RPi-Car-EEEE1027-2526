@@ -8,9 +8,7 @@ import time
 from math import copysign
 
 
-def process_frame(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
     # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
@@ -29,8 +27,7 @@ def process_frame(
 
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
-    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
-                                           cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find and return main contour
     ## modified from https://github.com/tprlab/pitanq-dev
@@ -55,10 +52,12 @@ cam_size_y = 480
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
-        "format": "RGB888",
-        "size": (cam_size_x, cam_size_y)
+    "format": "RGB888",
+    "size": (cam_size_x,
+    cam_size_y)
     },
-    transform=libcamera.Transform(hflip=1, vflip=1))  # type: ignore
+    transform=libcamera.Transform(hflip=1,
+    vflip=1))  # type: ignore
 picam2.configure(config)
 picam2.start()
 time.sleep(2)
@@ -70,6 +69,8 @@ frame_discard_percentage = 0.3
 # %age by which the ROI is being moved upwards
 frame_discard_offset = 0.125
 
+BLACK_RANGE = [(0, 0, 0), (131, 17, 31)]
+
 try:
     while True:
         # Capture a still frame from the camera
@@ -80,16 +81,21 @@ try:
 
         height, width = np.shape(thresh)
 
-        frame_roi = frame[int(height *
-                              (frame_discard_percentage - frame_discard_offset)
-                              ):int(height * (1 - frame_discard_offset)):]
+        frame_roi = frame[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
+            (1 - frame_discard_offset)):]
         frame_roi_w_contours = frame_roi.copy()
-        thresh_roi = thresh[int(height * (frame_discard_percentage -
-                                          frame_discard_offset)):int(height * (
-                                              1 - frame_discard_offset)):]
+        thresh_roi = thresh[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
+            (1 - frame_discard_offset)):]
 
-        contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL,
-            cv2.CHAIN_APPROX_SIMPLE)
+        # Get mask of all black pixels in the image
+        black_mask = cv2.inRange(
+            cv2.cvtColor(frame_roi,
+            cv2.COLOR_BGR2HSV),
+            np.array(BLACK_RANGE[0]),
+            np.array(BLACK_RANGE[1]))
+        thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
+
+        contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # Draw contours onto frame ROI
         cv2.drawContours(frame_roi_w_contours, contours, -1, (0, 255, 0), 3)
 
@@ -103,19 +109,15 @@ try:
             area = cv2.contourArea(cnt)
             if 1000 < area < 15600:
                 hull = cv2.convexHull(cnt)
-                solidity = float(area) / cv2.contourArea(
-                    hull) if cv2.contourArea(hull) > 0 else 0
+                solidity = float(area) / cv2.contourArea(hull) if cv2.contourArea(hull) > 0 else 0
                 if 0.52 <= solidity <= 0.75:
                     x, y, w, h = cv2.boundingRect(cnt)
                     M = cv2.moments(cnt)
                     if M["m00"] > 0:
-                        cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] /
-                            M["m00"])
-                        cv2.circle(frame_roi_w_contours, (cX, cY), 4,
-                            (255, 0, 0), 4)
+                        cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
+                        cv2.circle(frame_roi_w_contours, (cX, cY), 4, (255, 0, 0), 4)
                         bX, bY = x + (w / 2), y + (h / 2)
-                        cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4,
-                            (0, 255, 0), 4)
+                        cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4, (0, 255, 0), 4)
                         if abs(cX - bX) > abs(cY - bY):
                             detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
                             arrow_area = area
@@ -129,9 +131,7 @@ try:
                     detected_arrow = 'None'
             else:
                 detected_arrow = 'None'
-        print(
-            f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}'
-        )
+        print(f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}')
 
         # Display the different frames
         # cv2.imshow('Original', frame)
