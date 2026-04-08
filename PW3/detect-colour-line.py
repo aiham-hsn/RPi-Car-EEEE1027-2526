@@ -177,7 +177,8 @@ try:
         main_contour = thresh2maincontour(thresh_roi)
 
         if main_contour is not None:
-            cv2.drawContours(frame_roi, [main_contour], -1, (0, 255, 0), 3)
+            cv2.drawContours(frame_roi_w_contour, [main_contour], 0,
+                (0, 255, 0), 3)
 
         # Display the different frames
         # cv2.imshow('Original', frame)
