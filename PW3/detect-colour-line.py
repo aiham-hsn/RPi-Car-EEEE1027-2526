@@ -9,9 +9,7 @@ import time
 from math import copysign
 
 
-def process_frame(
-    input_frame: NDArray[np.uint8]
-) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
+def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to HSV colour space for colour line operations
 
     # Convert input frame to grayscale
@@ -29,8 +27,7 @@ def process_frame(
     return processed_gray, thresh  # pyright: ignore[reportReturnType]
 
 
-def process_frame_morphology_ops(
-        input_thresh: NDArray[np.uint8]) -> NDArray[np.uint8]:
+def process_frame_morphology_ops(input_thresh: NDArray[np.uint8]) -> NDArray[np.uint8]:
     # Create kernel for morphology operations
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     out_thresh = cv2.erode(input_thresh, kernel, iterations=1)
@@ -40,8 +37,7 @@ def process_frame_morphology_ops(
 
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
-    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL,
-        cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find and return main contour
     ## modified from https://github.com/tprlab/pitanq-dev
@@ -67,10 +63,8 @@ def detect_colored_line(raw_frame, colour):
     elif colour == "red":
         red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
         red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
-        red_masktop = cv2.inRange(hsv, np.array(red_toplow),
-            np.array(red_tophigh))
-        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow),
-            np.array(red_btmhigh))
+        red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
+        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
         red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
 
         mask = process_frame_morphology_ops(red_mask)
@@ -82,10 +76,8 @@ def detect_colored_line(raw_frame, colour):
 
         red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
         red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
-        red_masktop = cv2.inRange(hsv, np.array(red_toplow),
-            np.array(red_tophigh))
-        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow),
-            np.array(red_btmhigh))
+        red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
+        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
         red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
 
         mask = cv2.bitwise_or(ylw_mask, red_mask)
@@ -161,12 +153,10 @@ try:
         height, width = np.shape(thresh)
 
         frame_roi = frame[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
         frame_roi_w_contour = frame_roi.copy()
         thresh_roi = thresh[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
 
         # Check for colour in the ROI
         # colour_present, colour_mask = detect_colored_line(frame_roi, 'both')
@@ -178,8 +168,7 @@ try:
         main_contour = thresh2maincontour(thresh_roi)
 
         if main_contour is not None:
-            cv2.drawContours(frame_roi_w_contour, [main_contour], 0,
-                (0, 255, 0), 3)
+            cv2.drawContours(frame_roi_w_contour, [main_contour], 0, (0, 255, 0), 3)
 
         # Display the different frames
         # cv2.imshow('Original', frame)
