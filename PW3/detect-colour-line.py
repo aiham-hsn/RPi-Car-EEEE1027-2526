@@ -10,8 +10,6 @@ from math import copysign
 
 
 def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
-    # Convert input frame to HSV colour space for colour line operations
-
     # Convert input frame to grayscale
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
 
@@ -158,14 +156,17 @@ try:
         # Check for colour in the ROI
         # colour_present, colour_mask = detect_colored_line(frame_roi, 'both')
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
+
         if colour_present:
             if (now - last_time) > 2:
                 last_time = time.time()
                 print(f"Colour present? : [{colour_present}]")
             thresh_roi = cv2.bitwise_and(
                 thresh_roi, accept_mask)  # pyright: ignore[reportArgumentType, reportCallIssue]
-            if reject_mask is not None:
-                thresh_roi = cv2.subtract(thresh_roi, reject_mask)
+        if reject_mask is not None:
+            thresh_roi = cv2.subtract(thresh_roi, reject_mask)
+
+        thresh_roi = process_frame_morphology_ops(thresh_roi)
 
         main_contour = thresh2maincontour(thresh_roi)
 
