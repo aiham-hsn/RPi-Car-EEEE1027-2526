@@ -27,7 +27,7 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], ND
     return processed_gray, thresh  # pyright: ignore[reportReturnType]
 
 
-def process_frame_morphology_ops(input_thresh: NDArray[np.uint8]) -> NDArray[np.uint8]:
+def process_frame_morphology_ops(input_thresh):
     # Create kernel for morphology operations
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
     out_thresh = cv2.erode(input_thresh, kernel, iterations=1)
@@ -52,41 +52,35 @@ def thresh2maincontour(threshhold):
 def detect_colored_line(raw_frame, colour):
     hsv = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)
     if colour == "black":
-        return False, None
-    elif colour == "yellow":
-        ylw_low, ylw_high = COLOUR_RANGES['yellow']
-        ylw_mask = cv2.inRange(hsv, np.array(ylw_low), np.array(ylw_high))
+        return False, None, None
 
-        mask = process_frame_morphology_ops(ylw_mask)
-        colour_present = np.count_nonzero(mask) > 0
-        return colour_present, mask
-    elif colour == "red":
-        red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
-        red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
-        red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
-        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
-        red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
+    ylw_low, ylw_high = COLOUR_RANGES['yellow']
+    ylw_mask = cv2.inRange(hsv, np.array(ylw_low), np.array(ylw_high))
 
-        mask = process_frame_morphology_ops(red_mask)
-        colour_present = np.count_nonzero(mask) > 0
-        return colour_present, mask
-    elif colour == "both":
-        ylw_low, ylw_high = COLOUR_RANGES['yellow']
-        ylw_mask = cv2.inRange(hsv, np.array(ylw_low), np.array(ylw_high))
+    red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
+    red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
+    red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
+    red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
+    red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
 
-        red_toplow, red_tophigh = COLOUR_RANGES['red']['top']
-        red_btmlow, red_btmhigh = COLOUR_RANGES['red']['btm']
-        red_masktop = cv2.inRange(hsv, np.array(red_toplow), np.array(red_tophigh))
-        red_maskbtm = cv2.inRange(hsv, np.array(red_btmlow), np.array(red_btmhigh))
-        red_mask = cv2.bitwise_or(red_maskbtm, red_masktop)
-
-        mask = cv2.bitwise_or(ylw_mask, red_mask)
-
-        mask = process_frame_morphology_ops(red_mask)
-        colour_present = np.count_nonzero(mask) > 0
-        return colour_present, mask
-    else:
-        raise ValueError(f"Unknown value for input value \"colour\" [{colour}]")
+    match colour:
+        case "yellow":
+            accept_mask = process_frame_morphology_ops(ylw_mask)
+            reject_mask = process_frame_morphology_ops(red_mask)
+            colour_present = np.count_nonzero(accept_mask) > 0
+            return colour_present, accept_mask, reject_mask
+        case "red":
+            accept_mask = process_frame_morphology_ops(red_mask)
+            reject_mask = process_frame_morphology_ops(ylw_mask)
+            colour_present = np.count_nonzero(accept_mask) > 0
+            return colour_present, accept_mask, reject_mask
+        case "both":
+            both_mask = cv2.bitwise_or(ylw_mask, red_mask)
+            both_mask = process_frame_morphology_ops(both_mask)
+            colour_present = np.count_nonzero(both_mask) > 0
+            return colour_present, both_mask, None
+        case _:
+            raise ValueError(f"Unknown value for input value \"colour\" [{colour}]")
 
 
 def linefollowing_colourchoice() -> str:
@@ -163,12 +157,15 @@ try:
 
         # Check for colour in the ROI
         # colour_present, colour_mask = detect_colored_line(frame_roi, 'both')
-        colour_present, colour_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
+        colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
         if colour_present:
-            thresh_roi = cv2.bitwise_and(thresh_roi, colour_mask)
-        if (now - last_time) > 3:
-            last_time = time.time()
-            print(f"Colour present? : [{colour_present}]")
+            thresh_roi = cv2.bitwise_and(
+                thresh_roi, accept_mask)  # pyright: ignore[reportArgumentType, reportCallIssue]
+            if reject_mask is not None:
+                thresh_roi = cv2.subtract(thresh_roi, reject_mask)
+            if (now - last_time) > 3:
+                last_time = time.time()
+                print(f"Colour present? : [{colour_present}]")
 
         main_contour = thresh2maincontour(thresh_roi)
 
