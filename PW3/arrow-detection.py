@@ -110,25 +110,22 @@ try:
         area = cv2.contourArea(arrow_cnt)
         hull = cv2.convexHull(arrow_cnt)
         solidity = float(area) / cv2.contourArea(hull) if cv2.contourArea(hull) > 0 else 0
-        if 0.52 <= solidity <= 0.75:
-            x, y, w, h = cv2.boundingRect(arrow_cnt)
-            M = cv2.moments(arrow_cnt)
-            if M["m00"] > 0:
-                cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
-                cv2.circle(frame_roi_w_contours, (cX, cY), 4, (255, 0, 0), 4)
-                bX, bY = x + (w / 2), y + (h / 2)
-                cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4, (0, 255, 0), 4)
-                if abs(cX - bX) > abs(cY - bY):
-                    detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
-                    arrow_area = cv2.contourArea(arrow_cnt)
-                else:
-                    detected_arrow = "Arrow Down" if cY > bY else "Arrow Up"
-                    arrow_area = cv2.contourArea(arrow_cnt)
+        x, y, w, h = cv2.boundingRect(arrow_cnt)
+        M = cv2.moments(arrow_cnt)
+        if M["m00"] > 0:
+            cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
+            cv2.circle(frame_roi_w_contours, (cX, cY), 4, (255, 0, 0), 4)
+            bX, bY = x + (w / 2), y + (h / 2)
+            cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4, (0, 255, 0), 4)
+            if abs(cX - bX) > abs(cY - bY):
+                detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
+                arrow_area = cv2.contourArea(arrow_cnt)
             else:
-                detected_arrow = 'None'
+                detected_arrow = "Arrow Down" if cY > bY else "Arrow Up"
+                arrow_area = cv2.contourArea(arrow_cnt)
         else:
-            detected_arrow = 'None'
-        print(f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}')
+            detected_arrow = 'None (moment fail)'
+        print(f'Solidity : {solidity:.4f} || Arrow : {detected_arrow} || Area : {arrow_area:.2f}')
 
         # Display the different frames
         # cv2.imshow('Original', frame)
