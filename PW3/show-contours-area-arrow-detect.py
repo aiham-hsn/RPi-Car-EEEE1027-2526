@@ -10,7 +10,6 @@ from math import copysign
 
 def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], NDArray[np.uint8]]:
     # Convert input frame to grayscale
-    # processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
     processed_gray = cv2.cvtColor(input_frame, cv2.COLOR_RGB2GRAY)
 
     # Apply Gaussian blur
@@ -19,10 +18,18 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], ND
     # Just use normal thresholding
     _, thresh = cv2.threshold(processed_gray, 160, 255, cv2.THRESH_BINARY_INV)
 
-    kernel = np.ones((5, 5), np.uint8)  # for morphology operations
-    thresh = cv2.erode(thresh, kernel, iterations=1)
+    # Apply morphology operations
+    thresh = process_frame_morphology_ops(thresh)
 
     return processed_gray, thresh  # pyright: ignore[reportReturnType]
+
+
+def process_frame_morphology_ops(input_thresh):
+    # Create kernel for morphology operations
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
+    out_thresh = cv2.erode(input_thresh, kernel, iterations=1)
+
+    return out_thresh
 
 
 def thresh2maincontour(threshhold):
@@ -96,6 +103,7 @@ try:
             np.array(BLACK_RANGE[0]),
             np.array(BLACK_RANGE[1]))
         thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
+        thresh_roi = process_frame_morphology_ops(thresh_roi)
 
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # Draw contours onto frame ROI
