@@ -89,7 +89,7 @@ end_time = time.perf_counter_ns()
 start_time = time.perf_counter_ns()
 
 try:
-    for loop_idx in range(0, 5):
+    for loop_idx in range(0, 3):
         # Capture a still frame from the camera
         frame = picam2.capture_array()
 
