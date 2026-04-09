@@ -53,8 +53,11 @@ picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
     "format": "RGB888",
-    "size": (cam_size_x, cam_size_y)
-    }, transform=libcamera.Transform(hflip=1, vflip=1))  # type: ignore
+    "size": (cam_size_x,
+    cam_size_y)
+    },
+    transform=libcamera.Transform(hflip=1,
+    vflip=1))  # type: ignore
 picam2.configure(config)
 picam2.start()
 time.sleep(2)
@@ -78,61 +81,47 @@ try:
 
         height, width = np.shape(thresh)
 
-        frame_roi = frame[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+        frame_roi = frame[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
+            (1 - frame_discard_offset)):]
         frame_roi_w_contours = frame_roi.copy()
-        thresh_roi = thresh[int(height *
-            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+        thresh_roi = thresh[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
+            (1 - frame_discard_offset)):]
+
+        label_map = np.zeros_like(thresh_roi, dtype = 'uint8')
 
         # Get mask of all black pixels in the image
         black_mask = cv2.inRange(
-            cv2.cvtColor(frame_roi, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
+            cv2.cvtColor(frame_roi,
+            cv2.COLOR_BGR2HSV),
+            np.array(BLACK_RANGE[0]),
+            np.array(BLACK_RANGE[1]))
         thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
 
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # Draw contours onto frame ROI
         cv2.drawContours(frame_roi_w_contours, contours, -1, (0, 255, 0), 3)
 
-        detected_arrow = 'None'
-        arrow_area = 0
-        for cnt in contours:
+        # Check areas of the contours
+        for idx, cnt in enumerate(contours):
             area = cv2.contourArea(cnt)
-            if 1000 < area < 15600:
-                hull = cv2.convexHull(cnt)
-                solidity = float(area) / cv2.contourArea(hull) if cv2.contourArea(hull) > 0 else 0
-                if 0.52 <= solidity <= 0.75:
-                    x, y, w, h = cv2.boundingRect(cnt)
-                    M = cv2.moments(cnt)
-                    if M["m00"] > 0:
-                        cX, cY = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
-                        cv2.circle(frame_roi_w_contours, (cX, cY), 4, (255, 0, 0), 4)
-                        bX, bY = x + (w / 2), y + (h / 2)
-                        cv2.circle(frame_roi_w_contours, (int(bX), int(bY)), 4, (0, 255, 0), 4)
-                        if abs(cX - bX) > abs(cY - bY):
-                            detected_arrow = "Arrow Right" if cX > bX else "Arrow Left"
-                            arrow_area = area
-                        else:
-                            detected_arrow = "Arrow Down" if cY > bY else "Arrow Up"
-                            arrow_area = area
-                        break
-                    else:
-                        detected_arrow = 'None'
-                else:
-                    detected_arrow = 'None'
-            else:
-                detected_arrow = 'None'
-        print(f'Detected Arrow : {detected_arrow} || Arrow Area : {arrow_area:.2f}')
-
+            # print(f'Contour {idx} Area : {area}')
+            cv2.drawContours(label_map, [cnt], -1, (128, (255 / (idx+1)), 0), thickness=cv2.FILLED)
+        largest_contour = max(contours, key = cv2.contourArea)
+        print(f'Largest contour area : {cv2.contourArea(largest_contour)}')
         # Display the different frames
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
-        # cv2.imshow('Thresholded ROI', thresh_roi)
+        cv2.imshow('Thresholded ROI', thresh_roi)
         # cv2.imshow('Black Mask', black_mask)
         cv2.imshow(
             'ROI w/ contours',
             frame_roi_w_contours  # pyright: ignore[reportPossiblyUnboundVariable]
+        )
+        cv2.imshow(
+            'Label Map',
+            label_map  # pyright: ignore[reportPossiblyUnboundVariable]
         )
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
