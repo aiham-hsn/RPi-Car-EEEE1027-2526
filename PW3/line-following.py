@@ -235,6 +235,10 @@ time.sleep(0.2)
 
 start_time = time.time()
 last_time = time.time()
+global followed_colour, colour_dir
+followed_colour = False
+colour_dir = None
+
 try:
     while True:
         # Capture a still frame from the camera
@@ -258,36 +262,62 @@ try:
 
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
 
+        colour_dir = None
+
         if colour_present:
+            followed_colour = True
             thresh_roi = accept_mask.copy()  # type: ignore
+            col_main_cent_x, _ = calc_centroid(thresh2maincontour(thresh_roi))
+            colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
             if (now - last_time) > 2:
                 last_time = time.time()
                 print(f"Colour present? : [{colour_present}]")
         if reject_mask is not None:
-            thresh_roi = cv2.subtract(thresh_roi, reject_mask)
+            thresh_roi = cv2.bitwise_xor(thresh_roi, reject_mask)
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
         main_contour = thresh2maincontour(thresh_roi)
 
         if main_contour is not None:
-            cent_x, cent_y = calc_centroid(main_contour)
-            pid_out = pid.update(cent_x, dt)
-            corr = (pid_out) / (100 * 2)
-            #print(f"type(cent_x) : [{type(cent_x)}]")
+            if colour_present is False and followed_colour is True:
+                ls = last_left_spd
+                rs = last_right_spd
+                match colour_dir:
+                    case 'Right':
+                        ls = max((BASE_SPEED - 15), 0)
+                        rs = max((BASE_SPEED + 15), 0)
+                    case 'Left':
+                        ls = max((BASE_SPEED + 15), 0)
+                        rs = max((BASE_SPEED - 15), 0)
+                set_duty_cycle_left(ls)
+                set_duty_cycle_right(rs)
 
-            frame_roi_w_points = cv2.circle(frame_roi, (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
-            #ls = max(min(BASE_SPEED - corr, MIN_SPEED), 0)
-            #rs = max(min(BASE_SPEED + corr, MIN_SPEED), 0)
-            ls = last_left_spd = max((BASE_SPEED - corr), 0)
-            rs = last_right_spd = max((BASE_SPEED + corr), 0)
-            set_duty_cycle_left(ls)
-            set_duty_cycle_right(rs)
-            left_dir.forward()
-            right_dir.forward()
-            #print(
-            #    f"Line cent_x: [{cent_x}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
-            #)
+                colour_dir = None
+                followed_colour = False
+
+                left_dir.forward()
+                right_dir.forward()
+
+                time.sleep(1)
+            else:
+                cent_x, cent_y = calc_centroid(main_contour)
+                pid_out = pid.update(cent_x, dt)
+                corr = (pid_out) / (100 * 2)
+                #print(f"type(cent_x) : [{type(cent_x)}]")
+
+                frame_roi_w_points = cv2.circle(frame_roi, (cent_x, int(cam_size_y / 2)), 4, (255, 0, 0), 4)
+                #ls = max(min(BASE_SPEED - corr, MIN_SPEED), 0)
+                #rs = max(min(BASE_SPEED + corr, MIN_SPEED), 0)
+                ls = last_left_spd = max((BASE_SPEED - corr), 0)
+                rs = last_right_spd = max((BASE_SPEED + corr), 0)
+                set_duty_cycle_left(ls)
+                set_duty_cycle_right(rs)
+                left_dir.forward()
+                right_dir.forward()
+                #print(
+                #    f"Line cent_x: [{cent_x}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
+                #)
         else:
             stop_car()
             spd_diff = last_left_spd - last_right_spd  # +ve when supposed to take a right turn, -ve when supposed to take a left turn
