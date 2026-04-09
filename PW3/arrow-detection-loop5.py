@@ -149,4 +149,4 @@ finally:
         print('[ARROW DETECTION] Arrow symbol not reliably detected')
     else:
         print(f'[ARROW DETECTION] Most commonly detected arrow: {most_common_arrow_detection}')
-    print(f'\nTime taken : {(end_time-start_time)/1000000000:.2f} seconds')
+    print(f'\nTime taken : {(end_time-start_time)/1000000:.2f} msecs')
