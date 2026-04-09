@@ -84,6 +84,10 @@ arrow_detections = deque([])
 global detected_arrow
 detected_arrow = None
 
+global start_time, end_time
+end_time = time.perf_counter_ns()
+start_time = time.perf_counter_ns()
+
 try:
     for loop_idx in range(0, 5):
         # Capture a still frame from the camera
@@ -133,6 +137,8 @@ try:
         else:
             detected_arrow = None
         arrow_detections.appendleft(detected_arrow)
+
+        end_time = time.perf_counter_ns()
 except KeyboardInterrupt:
     print("\nKeyboard interrupt detected, stopping program...")
 finally:
@@ -143,3 +149,4 @@ finally:
         print('[ARROW DETECTION] Arrow symbol not reliably detected')
     else:
         print(f'[ARROW DETECTION] Most commonly detected arrow: {most_common_arrow_detection}')
+    print(f'\nTime taken : {(end_time-start_time)/1000000000:.2f} seconds')
