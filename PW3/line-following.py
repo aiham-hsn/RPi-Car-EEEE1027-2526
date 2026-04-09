@@ -7,6 +7,7 @@ import libcamera
 import cv2
 import time
 from math import copysign
+from collections import deque, Counter
 
 
 def set_duty_cycle_both(input: Union[int, float]) -> None:
@@ -156,6 +157,62 @@ def linefollowing_colourchoice() -> str:
         print(f"  Invalid choice {raw!r} — please enter 1, 2, 3, or 4.")
 
 
+def arrow_detection_loop(loop_count: int = 3):
+
+    def list_getMode(input_list: list) -> Union[str, None]:
+        return Counter(input_list).most_common(1)[0][0]
+
+    arrow_detections = deque([])
+    BLACK_RANGE = [(0, 0, 0), (180, 160, 110)]
+    for loop_idx in range(0, loop_count):
+        # Capture a still frame from the camera
+        frame = picam2.capture_array()
+
+        # Process frame using function
+        _, thresh = process_frame(frame)
+
+        height, _ = np.shape(thresh)
+
+        frame_roi = frame[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+        thresh_roi = thresh[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+
+        # Get mask of all black pixels in the image
+        black_mask = cv2.inRange(
+            cv2.cvtColor(frame_roi, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
+        thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
+
+        thresh_roi = process_frame_morphology_ops(thresh_roi)
+
+        contours, _ = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Assume the largest contour is the arrow
+        # Assumption is only possible due to the fact that the black line is being filtered out
+        arrow_cnt = max(contours, key=cv2.contourArea)
+        detected_arrow = None
+
+        x, y, w, h = cv2.boundingRect(arrow_cnt)
+        arrow_cnt_moments = cv2.moments(arrow_cnt)
+        if arrow_cnt_moments["m00"] > 0:
+            # Get centroid of arrow contour
+            cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
+
+            # Get the center of the bounding box of the arrow contour
+            bX, bY = x + (w / 2), y + (h / 2)
+
+            if abs(cX - bX) > abs(cY - bY):
+                detected_arrow = "Right" if cX > bX else "Left"
+
+            else:
+                detected_arrow = "Down" if cY > bY else "Up"
+        else:
+            detected_arrow = None
+        arrow_detections.appendleft(detected_arrow)
+    most_common_arrow_detection = list_getMode(list(arrow_detections))
+    return most_common_arrow_detection
+
+
 cam_size_x = 640
 cam_size_y = 480
 
@@ -233,8 +290,8 @@ spd_diff = 0
 drive_fwd(0.4)
 time.sleep(0.2)
 
-start_time = time.time()
-last_time = time.time()
+start_time = last_time = last_arrow_detect_time = time.time()
+
 global followed_colour, colour_dir
 followed_colour = False
 colour_dir = None
@@ -247,6 +304,28 @@ try:
         now = time.time()
         dt = now - last_time
         last_time = now
+
+        if (now - last_arrow_detect_time) > 0.5:
+            print('[ARROW DETECTION] Running the arrow detection function')
+            last_arrow_detect_time = time.time()
+            arrow_detect = arrow_detection_loop()
+            if arrow_detect is not None:
+                print(f'[ARROW DETECTION] Arrow detected : [{arrow_detect}]')
+                ls = last_left_spd
+                rs = last_right_spd
+                match arrow_detect:
+                    case 'Right':
+                        ls = max((BASE_SPEED - 15), 0)
+                        rs = max((BASE_SPEED + 15), 0)
+                    case 'Left':
+                        ls = max((BASE_SPEED + 15), 0)
+                        rs = max((BASE_SPEED - 15), 0)
+                set_duty_cycle_left(ls)
+                set_duty_cycle_right(rs)
+                print(f'[ARROW DETECTION] Moving car [{arrow_detect}] for 1sec')
+                left_dir.forward()
+                right_dir.forward()
+                time.sleep(1)
 
         # Process frame using function
         processed, thresh = process_frame(frame)
