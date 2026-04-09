@@ -259,11 +259,10 @@ try:
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
 
         if colour_present:
+            thresh_roi = accept_mask.copy()  # type: ignore
             if (now - last_time) > 2:
                 last_time = time.time()
                 print(f"Colour present? : [{colour_present}]")
-            thresh_roi = cv2.bitwise_and(
-                thresh_roi, accept_mask)  # pyright: ignore[reportArgumentType, reportCallIssue]
         if reject_mask is not None:
             thresh_roi = cv2.subtract(thresh_roi, reject_mask)
 
