@@ -183,3 +183,4 @@ pyrightconfig.json
 **/*.json
 **/threshval-calib-outframe-*.jpg
 **/*-n-black-track-*.jpg
+**/*.pt
