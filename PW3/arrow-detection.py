@@ -53,11 +53,8 @@ picam2 = Picamera2()
 config = picam2.create_video_configuration(
     main={
     "format": "RGB888",
-    "size": (cam_size_x,
-    cam_size_y)
-    },
-    transform=libcamera.Transform(hflip=1,
-    vflip=1))  # type: ignore
+    "size": (cam_size_x, cam_size_y)
+    }, transform=libcamera.Transform(hflip=1, vflip=1))  # type: ignore
 picam2.configure(config)
 picam2.start()
 time.sleep(2)
@@ -81,18 +78,15 @@ try:
 
         height, width = np.shape(thresh)
 
-        frame_roi = frame[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+        frame_roi = frame[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
         frame_roi_w_contours = frame_roi.copy()
-        thresh_roi = thresh[int(height * (frame_discard_percentage - frame_discard_offset)):int(height *
-            (1 - frame_discard_offset)):]
+        thresh_roi = thresh[int(height *
+            (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
 
         # Get mask of all black pixels in the image
         black_mask = cv2.inRange(
-            cv2.cvtColor(frame_roi,
-            cv2.COLOR_BGR2HSV),
-            np.array(BLACK_RANGE[0]),
-            np.array(BLACK_RANGE[1]))
+            cv2.cvtColor(frame_roi, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
         thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
 
         contours, hierarchy = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
