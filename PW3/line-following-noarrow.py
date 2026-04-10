@@ -84,7 +84,7 @@ def process_frame_morphology_ops(input_thresh):
 
 def thresh2maincontour(threshhold):
     # Get contours from threshhold
-    contours, hierarchy = cv2.findContours(threshhold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(threshhold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Find and return main contour
     ## modified from https://github.com/tprlab/pitanq-dev
@@ -128,9 +128,9 @@ def detect_coloured_line(raw_frame, colour):
 
     hsv = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2HSV)
     colour_mask = gen_masks(hsv, colour)
-    colour_present = bool(np.count_nonzero(colour_mask) > 0)
+    colour_present = np.count_nonzero(colour_mask) > 0
 
-    return colour_present, colour_mask
+    return bool(colour_present), colour_mask
 
 
 def linefollowing_colourchoice() -> str:
@@ -193,7 +193,7 @@ pid = ownPID(0.5, 0.01, 0.05)
 BASE_SPEED = 0.40
 MIN_SPEED = 0.30
 
-global COLOUR_RANGES, PRIORITY_COLOUR
+global COLOUR_RANGES, PRIORITY_COLOURS
 COLOUR_RANGES = {
     "red": {
     "top": [(170, 150, 100), (180, 255, 255)],
@@ -275,10 +275,8 @@ try:
                 else:
                     current_colour = None
                     followed_colour = False
-                    colour_dir_check =False
-                    ini_colour_dir=None
-
-
+                    colour_dir_check = False
+                    ini_colour_dir = None
 
         print(
             f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
@@ -316,7 +314,7 @@ try:
                 left_dir.forward()
                 right_dir.forward()
 
-                if current_colour=='RED':
+                if current_colour == 'RED':
                     move_sec = 1
                     print(f'[RED LINE] Moving for {move_sec}sec')
                     time.sleep(move_sec)
