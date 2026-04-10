@@ -264,8 +264,6 @@ try:
         if PRIORITY_COLOURS is not None:
             for colour in PRIORITY_COLOURS:
                 colour_present, accept_mask = detect_coloured_line(frame_roi, colour)
-                print(f'Colour Present? : [{colour_present}]')
-                print(f'colour_present is True : [{colour_present is True}]')
                 if colour_present is True:
                     current_colour = colour
                     followed_colour = True
@@ -281,14 +279,9 @@ try:
                     colour_dir_check = False
                     ini_colour_dir = None
 
-        # print(
-        #     f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
-        # )
-        #if (now - last_time) > 2:
-        #    last_time = time.time()
-        #    print(
-        #        f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
-        #    )
+        print(
+            f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+        )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
