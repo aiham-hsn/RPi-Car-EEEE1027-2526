@@ -66,7 +66,7 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], ND
     processed_gray = cv2.GaussianBlur(processed_gray, (9, 9), 0)
 
     # Just use normal thresholding
-    _, thresh = cv2.threshold(processed_gray, 120, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(processed_gray, 150, 255, cv2.THRESH_BINARY_INV)
 
     # Apply morphology operations
     thresh = process_frame_morphology_ops(thresh)
