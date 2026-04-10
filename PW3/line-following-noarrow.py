@@ -274,15 +274,24 @@ try:
                         colour_dir_check = True
                     break
 
-        print(
-            f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
-        )
+        # print(
+        #     f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+        # )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
         main_contour = thresh2maincontour(thresh_roi)
 
         if main_contour is not None:
+            main_cnt_area = cv2.contourArea(main_contour)
+            #print(main_cnt_area)
+            if main_cnt_area > 51000:
+                print('Detected Intersection')
+                set_duty_cycle_left(0.8)
+                set_duty_cycle_right(0.3)
+                left_dir.forward()
+                right_dir.backward()
+                time.sleep(0.75)
             if colour_present is False and followed_colour is True:
                 ls = last_left_spd
                 rs = last_right_spd
@@ -358,7 +367,7 @@ try:
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
-        cv2.imshow('Thresholded ROI', thresh_roi)
+        # cv2.imshow('Thresholded ROI', thresh_roi)
         # cv2.imshow(
         #     'ROI w/ contours',
         #     frame_roi_w_points  # pyright: ignore[reportPossiblyUnboundVariable]

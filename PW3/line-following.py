@@ -66,7 +66,7 @@ def process_frame(input_frame: NDArray[np.uint8]) -> tuple[NDArray[np.uint8], ND
     processed_gray = cv2.GaussianBlur(processed_gray, (9, 9), 0)
 
     # Just use normal thresholding
-    _, thresh = cv2.threshold(processed_gray, 150, 255, cv2.THRESH_BINARY_INV)
+    _, thresh = cv2.threshold(processed_gray, 110, 255, cv2.THRESH_BINARY_INV)
 
     # Apply morphology operations
     thresh = process_frame_morphology_ops(thresh)
@@ -231,41 +231,39 @@ def arrow_detection(input_frame=None):
 
     height, _ = np.shape(thresh)
 
-    frame_roi = frame[  # pyright: ignore[reportOptionalSubscript]
-        int(height * (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
-    thresh_roi = thresh[int(height *
-        (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
-
     # Get mask of all black pixels in the image
     black_mask = cv2.inRange(
-        cv2.cvtColor(frame_roi, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
-    thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
+        cv2.cvtColor(frame, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
+    thresh = cv2.bitwise_xor(thresh, black_mask)
 
-    thresh_roi = process_frame_morphology_ops(thresh_roi)
+    thresh = process_frame_morphology_ops(thresh)
 
-    contours, _ = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    # Assume the largest contour is the arrow
-    # Assumption is only possible due to the fact that the black line is being filtered out
-    arrow_cnt = max(contours, key=cv2.contourArea)
-    arrow_area = cv2.contourArea(arrow_cnt)
     detected_arrow = None
+    if len(contours) > 0:
+        # Assume the largest contour is the arrow
+        # Assumption is only possible due to the fact that the black line is being filtered out
+        arrow_cnt = max(contours, key=cv2.contourArea)
+        arrow_area = cv2.contourArea(arrow_cnt)
 
-    if arrow_area > 2000:
-        x, y, w, h = cv2.boundingRect(arrow_cnt)
-        arrow_cnt_moments = cv2.moments(arrow_cnt)
-        if arrow_cnt_moments["m00"] > 0:
-            # Get centroid of arrow contour
-            cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
+        if arrow_area > 2000:
+            x, y, w, h = cv2.boundingRect(arrow_cnt)
+            arrow_cnt_moments = cv2.moments(arrow_cnt)
+            if arrow_cnt_moments["m00"] > 0:
+                # Get centroid of arrow contour
+                cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
 
-            # Get the center of the bounding box of the arrow contour
-            bX, bY = x + (w / 2), y + (h / 2)
+                # Get the center of the bounding box of the arrow contour
+                bX, bY = x + (w / 2), y + (h / 2)
 
-            if abs(cX - bX) > abs(cY - bY):
-                detected_arrow = "Right" if cX > bX else "Left"
+                if abs(cX - bX) > abs(cY - bY):
+                    detected_arrow = "Right" if cX > bX else "Left"
 
+                else:
+                    detected_arrow = "Down" if cY > bY else "Up"
             else:
-                detected_arrow = "Down" if cY > bY else "Up"
+                detected_arrow = None
         else:
             detected_arrow = None
     else:
@@ -400,29 +398,34 @@ try:
 
         if main_contour is not None:
             main_cnt_area = cv2.contourArea(main_contour)
-            print(f'Main Contour Area : {main_cnt_area}')
-            if main_cnt_area > 61000:
+            #print(main_cnt_area)
+            if main_cnt_area > 54000:
                 stop_car()
                 print(f'[ARROW DETECT] At intersection, checking for arrows')
 
-                arrow_detect = arrow_detection_loop()
+                arrow_detect = arrow_detection(frame)
                 if arrow_detect is not None:
                     print(f'[ARROW DETECT] Arrow detected : [{arrow_detect}]')
                     ls = last_left_spd
                     rs = last_right_spd
                     match arrow_detect:
                         case 'Right':
-                            ls = max((BASE_SPEED - 15), 0)
-                            rs = max((BASE_SPEED + 15), 0)
+                            ls = max((BASE_SPEED - 0.1), 0)
+                            rs = max((BASE_SPEED + 0.1), 0)
                         case 'Left':
-                            ls = max((BASE_SPEED + 15), 0)
-                            rs = max((BASE_SPEED - 15), 0)
+                            ls = max((BASE_SPEED + 0.1), 0)
+                            rs = max((BASE_SPEED - 0.1), 0)
                     set_duty_cycle_left(ls)
                     set_duty_cycle_right(rs)
                     print(f'[ARROW DETECT] Moving car [{arrow_detect}] for 1sec')
-                    left_dir.forward()
-                    right_dir.forward()
-                    time.sleep(0.5)
+                    match arrow_detect:
+                        case 'Right':
+                            left_dir.forward()
+                            right_dir.backward()
+                        case 'Left':
+                            left_dir.backward()
+                            right_dir.forward()
+                    time.sleep(0.75)
                 else:
                     print(f'[ARROW DETECT] No arrow detected')
 
@@ -498,7 +501,7 @@ try:
         # Display the different frames
         # cv2.imshow('Original', frame)
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
-        # cv2.imshow('Thresholded', thresh)
+        cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
         # cv2.imshow('Thresholded ROI', thresh_roi)
         # cv2.imshow(
