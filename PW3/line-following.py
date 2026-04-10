@@ -186,22 +186,26 @@ def arrow_detection_loop(loop_count: int = 3):
         # Assume the largest contour is the arrow
         # Assumption is only possible due to the fact that the black line is being filtered out
         arrow_cnt = max(contours, key=cv2.contourArea)
+        arrow_area = cv2.contourArea(arrow_cnt)
         detected_arrow = None
 
-        x, y, w, h = cv2.boundingRect(arrow_cnt)
-        arrow_cnt_moments = cv2.moments(arrow_cnt)
-        if arrow_cnt_moments["m00"] > 0:
-            # Get centroid of arrow contour
-            cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
+        if arrow_area > 2000:
+            x, y, w, h = cv2.boundingRect(arrow_cnt)
+            arrow_cnt_moments = cv2.moments(arrow_cnt)
+            if arrow_cnt_moments["m00"] > 0:
+                # Get centroid of arrow contour
+                cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
 
-            # Get the center of the bounding box of the arrow contour
-            bX, bY = x + (w / 2), y + (h / 2)
+                # Get the center of the bounding box of the arrow contour
+                bX, bY = x + (w / 2), y + (h / 2)
 
-            if abs(cX - bX) > abs(cY - bY):
-                detected_arrow = "Right" if cX > bX else "Left"
+                if abs(cX - bX) > abs(cY - bY):
+                    detected_arrow = "Right" if cX > bX else "Left"
 
+                else:
+                    detected_arrow = "Down" if cY > bY else "Up"
             else:
-                detected_arrow = "Down" if cY > bY else "Up"
+                detected_arrow = None
         else:
             detected_arrow = None
         arrow_detections.appendleft(detected_arrow)
