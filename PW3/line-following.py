@@ -213,6 +213,66 @@ def arrow_detection_loop(loop_count: int = 3):
     return most_common_arrow_detection
 
 
+def arrow_detection(input_frame=None):
+
+    BLACK_RANGE = [(0, 0, 0), (180, 160, 110)]
+
+    frame = None
+    if input is None:
+        # Capture a still frame from the camera
+        print('Input frame not provided, capturing frame from camera')
+        frame = picam2.capture_array()
+    else:
+        print('Input frame provided')
+        frame = input_frame
+
+    # Process frame using function
+    _, thresh = process_frame(frame)  # pyright: ignore[reportArgumentType]
+
+    height, _ = np.shape(thresh)
+
+    frame_roi = frame[  # pyright: ignore[reportOptionalSubscript]
+        int(height * (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+    thresh_roi = thresh[int(height *
+        (frame_discard_percentage - frame_discard_offset)):int(height * (1 - frame_discard_offset)):]
+
+    # Get mask of all black pixels in the image
+    black_mask = cv2.inRange(
+        cv2.cvtColor(frame_roi, cv2.COLOR_BGR2HSV), np.array(BLACK_RANGE[0]), np.array(BLACK_RANGE[1]))
+    thresh_roi = cv2.bitwise_xor(thresh_roi, black_mask)
+
+    thresh_roi = process_frame_morphology_ops(thresh_roi)
+
+    contours, _ = cv2.findContours(thresh_roi, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Assume the largest contour is the arrow
+    # Assumption is only possible due to the fact that the black line is being filtered out
+    arrow_cnt = max(contours, key=cv2.contourArea)
+    arrow_area = cv2.contourArea(arrow_cnt)
+    detected_arrow = None
+
+    if arrow_area > 2000:
+        x, y, w, h = cv2.boundingRect(arrow_cnt)
+        arrow_cnt_moments = cv2.moments(arrow_cnt)
+        if arrow_cnt_moments["m00"] > 0:
+            # Get centroid of arrow contour
+            cX, cY = int(arrow_cnt_moments["m10"] / arrow_cnt_moments["m00"]), int(arrow_cnt_moments["m01"] / arrow_cnt_moments["m00"])
+
+            # Get the center of the bounding box of the arrow contour
+            bX, bY = x + (w / 2), y + (h / 2)
+
+            if abs(cX - bX) > abs(cY - bY):
+                detected_arrow = "Right" if cX > bX else "Left"
+
+            else:
+                detected_arrow = "Down" if cY > bY else "Up"
+        else:
+            detected_arrow = None
+    else:
+        detected_arrow = None
+    return detected_arrow
+
+
 cam_size_x = 640
 cam_size_y = 480
 
