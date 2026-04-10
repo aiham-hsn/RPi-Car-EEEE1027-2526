@@ -329,6 +329,7 @@ try:
                 #    f"Line cent_x: [{cent_x}] | Corr: [{corr:.2f}] | LS: [{ls:.2f}] | RS: [{rs:.2f}] | LLS: [{last_left_spd:.2f}] | LRS: [{last_right_spd:.2f}]"
                 #)
         else:
+            print('\nLine no longer visible\n')
             stop_car()
             spd_diff = last_left_spd - last_right_spd  # +ve when supposed to take a right turn, -ve when supposed to take a left turn
             # print(f"Speed diff: [{spd_diff}]")
