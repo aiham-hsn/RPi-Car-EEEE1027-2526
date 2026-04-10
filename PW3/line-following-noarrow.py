@@ -122,17 +122,17 @@ def detect_colored_line(raw_frame, colour):
             accept_mask = process_frame_morphology_ops(ylw_mask)
             reject_mask = process_frame_morphology_ops(red_mask)
             colour_present = np.count_nonzero(accept_mask) > 0
-            return colour_present, accept_mask, reject_mask
+            return bool(colour_present), accept_mask, reject_mask
         case "red":
             accept_mask = process_frame_morphology_ops(red_mask)
             reject_mask = process_frame_morphology_ops(ylw_mask)
             colour_present = np.count_nonzero(accept_mask) > 0
-            return colour_present, accept_mask, reject_mask
+            return bool(colour_present), accept_mask, reject_mask
         case "both":
             both_mask = cv2.bitwise_or(ylw_mask, red_mask)
             both_mask = process_frame_morphology_ops(both_mask)
             colour_present = np.count_nonzero(both_mask) > 0
-            return colour_present, both_mask, None
+            return bool(colour_present), both_mask, None
         case _:
             raise ValueError(f"Unknown value for input value \"colour\" [{colour}]")
 
