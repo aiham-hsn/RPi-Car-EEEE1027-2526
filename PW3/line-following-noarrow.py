@@ -308,7 +308,11 @@ try:
                 if current_colour == 'RED':
                     move_sec = 1
                     print(f'[RED LINE] Moving for {move_sec}sec')
+                    current_colour = None
                     time.sleep(move_sec)
+                else:
+                    current_colour = None
+
             else:
                 cent_x, cent_y = calc_centroid(main_contour)
                 pid_out = pid.update(cent_x, dt)
