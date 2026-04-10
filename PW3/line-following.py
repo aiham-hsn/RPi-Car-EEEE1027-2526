@@ -342,9 +342,10 @@ try:
 
         if main_contour is not None:
             main_cnt_area = cv2.contourArea(main_contour)
+            print(f'Main Contour Area : {main_cnt_area}')
             if main_cnt_area > 60000:
+                stop_car()
                 sleep_sec = 5
-                print(f'Main Contour Area : {main_cnt_area}')
                 print(f'At intersection, sleeping {sleep_sec}')
                 time.sleep(sleep_sec)
             if colour_present is False and followed_colour is True:
