@@ -122,17 +122,17 @@ def detect_colored_line(raw_frame, colour):
             accept_mask = process_frame_morphology_ops(ylw_mask)
             reject_mask = process_frame_morphology_ops(red_mask)
             colour_present = np.count_nonzero(accept_mask) > 0
-            return colour_present, accept_mask, reject_mask
+            return bool(colour_present), accept_mask, reject_mask
         case "red":
             accept_mask = process_frame_morphology_ops(red_mask)
             reject_mask = process_frame_morphology_ops(ylw_mask)
             colour_present = np.count_nonzero(accept_mask) > 0
-            return colour_present, accept_mask, reject_mask
+            return bool(colour_present), accept_mask, reject_mask
         case "both":
             both_mask = cv2.bitwise_or(ylw_mask, red_mask)
             both_mask = process_frame_morphology_ops(both_mask)
             colour_present = np.count_nonzero(both_mask) > 0
-            return colour_present, both_mask, None
+            return bool(colour_present), both_mask, None
         case _:
             raise ValueError(f"Unknown value for input value \"colour\" [{colour}]")
 
@@ -250,7 +250,7 @@ class ownPID:
 
 
 pid = ownPID(0.5, 0.01, 0.05)
-BASE_SPEED = 0.55
+BASE_SPEED = 0.40
 MIN_SPEED = 0.30
 
 global COLOUR_RANGES, PRIORITY_COLOUR
@@ -292,9 +292,10 @@ time.sleep(0.2)
 
 start_time = last_time = last_arrow_detect_time = time.time()
 
-global followed_colour, colour_dir
+global followed_colour, ini_colour_dir, colour_dir_check
 followed_colour = False
-colour_dir = None
+colour_dir_check = False
+ini_colour_dir = None
 
 try:
     while True:
@@ -304,28 +305,6 @@ try:
         now = time.time()
         dt = now - last_time
         last_time = now
-
-        if (now - last_arrow_detect_time) > 0.5:
-            print('[ARROW DETECTION] Running the arrow detection function')
-            last_arrow_detect_time = time.time()
-            arrow_detect = arrow_detection_loop()
-            if arrow_detect is not None:
-                print(f'[ARROW DETECTION] Arrow detected : [{arrow_detect}]')
-                ls = last_left_spd
-                rs = last_right_spd
-                match arrow_detect:
-                    case 'Right':
-                        ls = max((BASE_SPEED - 15), 0)
-                        rs = max((BASE_SPEED + 15), 0)
-                    case 'Left':
-                        ls = max((BASE_SPEED + 15), 0)
-                        rs = max((BASE_SPEED - 15), 0)
-                set_duty_cycle_left(ls)
-                set_duty_cycle_right(rs)
-                print(f'[ARROW DETECTION] Moving car [{arrow_detect}] for 1sec')
-                left_dir.forward()
-                right_dir.forward()
-                time.sleep(1)
 
         # Process frame using function
         processed, thresh = process_frame(frame)
@@ -341,18 +320,21 @@ try:
 
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
 
-        colour_dir = None
-
         if colour_present:
             followed_colour = True
             thresh_roi = accept_mask.copy()  # type: ignore
             col_main_cent_x, _ = calc_centroid(thresh2maincontour(thresh_roi))
-            colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
-            if (now - last_time) > 2:
-                last_time = time.time()
-                print(f"Colour present? : [{colour_present}]")
+            if colour_dir_check is False:
+                ini_colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
+                colour_dir_check = True
         if reject_mask is not None:
             thresh_roi = cv2.bitwise_xor(thresh_roi, reject_mask)
+
+        if (now - last_time) > 2:
+            last_time = time.time()
+            print(
+                f"Clr : [{colour_present}] || Flwd : [{followed_colour}] || Dir Chk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+            )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
@@ -362,22 +344,27 @@ try:
             if colour_present is False and followed_colour is True:
                 ls = last_left_spd
                 rs = last_right_spd
-                match colour_dir:
+                match ini_colour_dir:
                     case 'Right':
+                        print('Exiting coloured line, moving [Right]')
                         ls = max((BASE_SPEED - 15), 0)
                         rs = max((BASE_SPEED + 15), 0)
                     case 'Left':
+                        print('Exiting coloured line, moving [Left]')
                         ls = max((BASE_SPEED + 15), 0)
                         rs = max((BASE_SPEED - 15), 0)
                 set_duty_cycle_left(ls)
                 set_duty_cycle_right(rs)
 
-                colour_dir = None
+                ini_colour_dir = None
                 followed_colour = False
+                colour_dir_check = False
 
                 left_dir.forward()
                 right_dir.forward()
 
+                move_sec = 1
+                print(f'Moving for {move_sec}sec')
                 time.sleep(1)
             else:
                 cent_x, cent_y = calc_centroid(main_contour)
