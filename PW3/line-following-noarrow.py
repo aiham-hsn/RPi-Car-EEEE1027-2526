@@ -276,7 +276,9 @@ try:
         if reject_mask is not None:
             thresh_roi = cv2.bitwise_xor(thresh_roi, reject_mask)
 
-        print(f"Colour : [{colour_present}] || Followed : [{followed_colour}] || Dir : [{ini_colour_dir}]")
+        print(
+            f"Clr : [{colour_present}] || Flwd : [{followed_colour}] || Dir Chk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+        )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
