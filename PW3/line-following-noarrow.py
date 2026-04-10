@@ -274,6 +274,7 @@ try:
                     if colour_dir_check is False:
                         ini_colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
                         colour_dir_check = True
+                    break
                 else:
                     current_colour = None
                     followed_colour = False
