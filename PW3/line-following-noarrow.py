@@ -236,9 +236,10 @@ time.sleep(0.2)
 
 start_time = last_time = last_arrow_detect_time = time.time()
 
-global followed_colour, colour_dir
+global followed_colour, ini_colour_dir, colour_dir_check
 followed_colour = False
-colour_dir = None
+colour_dir_check = False
+ini_colour_dir = None
 
 try:
     while True:
@@ -263,18 +264,19 @@ try:
 
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
 
-        colour_dir = None
+        ini_colour_dir = None
 
         if colour_present:
             followed_colour = True
             thresh_roi = accept_mask.copy()  # type: ignore
             col_main_cent_x, _ = calc_centroid(thresh2maincontour(thresh_roi))
-            colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
-            if (now - last_time) > 2:
-                last_time = time.time()
-                print(f"Colour present? : [{colour_present}]")
+            if colour_dir_check is False:
+                ini_colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
+                colour_dir_check = True
         if reject_mask is not None:
             thresh_roi = cv2.bitwise_xor(thresh_roi, reject_mask)
+
+        print(f"Colour : [{colour_present}] || Followed : [{followed_colour}] || Dir : [{ini_colour_dir}]")
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
@@ -284,7 +286,7 @@ try:
             if colour_present is False and followed_colour is True:
                 ls = last_left_spd
                 rs = last_right_spd
-                match colour_dir:
+                match ini_colour_dir:
                     case 'Right':
                         ls = max((BASE_SPEED - 15), 0)
                         rs = max((BASE_SPEED + 15), 0)
@@ -294,7 +296,7 @@ try:
                 set_duty_cycle_left(ls)
                 set_duty_cycle_right(rs)
 
-                colour_dir = None
+                ini_colour_dir = None
                 followed_colour = False
 
                 left_dir.forward()
@@ -345,7 +347,7 @@ try:
         # cv2.imshow('Pre-Processed (Gray + Blur)', processed)
         # cv2.imshow('Thresholded', thresh)
         # cv2.imshow('Orignal ROI', frame_roi)
-        # cv2.imshow('Thresholded ROI', thresh_roi)
+        cv2.imshow('Thresholded ROI', thresh_roi)
         # cv2.imshow(
         #     'ROI w/ contours',
         #     frame_roi_w_points  # pyright: ignore[reportPossiblyUnboundVariable]
