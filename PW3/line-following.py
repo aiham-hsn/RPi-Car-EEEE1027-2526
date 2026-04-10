@@ -341,11 +341,31 @@ try:
         if main_contour is not None:
             main_cnt_area = cv2.contourArea(main_contour)
             print(f'Main Contour Area : {main_cnt_area}')
-            if main_cnt_area > 60000:
+            if main_cnt_area > 61000:
                 stop_car()
-                sleep_sec = 5
-                print(f'At intersection, sleeping {sleep_sec}')
-                time.sleep(sleep_sec)
+                print(f'[ARROW DETECT] At intersection, checking for arrows')
+
+                arrow_detect = arrow_detection_loop()
+                if arrow_detect is not None:
+                    print(f'[ARROW DETECT] Arrow detected : [{arrow_detect}]')
+                    ls = last_left_spd
+                    rs = last_right_spd
+                    match arrow_detect:
+                        case 'Right':
+                            ls = max((BASE_SPEED - 15), 0)
+                            rs = max((BASE_SPEED + 15), 0)
+                        case 'Left':
+                            ls = max((BASE_SPEED + 15), 0)
+                            rs = max((BASE_SPEED - 15), 0)
+                    set_duty_cycle_left(ls)
+                    set_duty_cycle_right(rs)
+                    print(f'[ARROW DETECT] Moving car [{arrow_detect}] for 1sec')
+                    left_dir.forward()
+                    right_dir.forward()
+                    time.sleep(0.5)
+                else:
+                    print(f'[ARROW DETECT] No arrow detected')
+
             if colour_present is False and followed_colour is True:
                 ls = last_left_spd
                 rs = last_right_spd
