@@ -311,10 +311,10 @@ try:
                 left_dir.forward()
                 right_dir.forward()
 
-                move_sec = 1
-                move_sec = 1 if current_colour == 'RED' else 0.2
-                print(f'Moving for {move_sec}sec')
-                time.sleep(move_sec)
+                if current_colour=='RED':
+                    move_sec = 1
+                    print(f'[RED LINE] Moving for {move_sec}sec')
+                    time.sleep(move_sec)
             else:
                 cent_x, cent_y = calc_centroid(main_contour)
                 pid_out = pid.update(cent_x, dt)
