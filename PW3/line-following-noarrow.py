@@ -273,11 +273,6 @@ try:
                         ini_colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
                         colour_dir_check = True
                     break
-                else:
-                    current_colour = None
-                    followed_colour = False
-                    colour_dir_check = False
-                    ini_colour_dir = None
 
         print(
             f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
