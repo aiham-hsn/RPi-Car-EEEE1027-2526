@@ -141,7 +141,7 @@ def linefollowing_colourchoice() -> str:
         '4': ('both', 'Red or yellow or black line', ['RED', 'YELLOW']),
     }
     print("Select line colour(s) to follow.\nOptions:")
-    for key, (_, desc) in options.items():
+    for key, (_, desc, _) in options.items():
         print(f"{key} : {desc}")
 
     while True:
