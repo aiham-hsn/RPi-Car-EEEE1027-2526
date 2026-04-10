@@ -285,6 +285,12 @@ try:
         main_contour = thresh2maincontour(thresh_roi)
 
         if main_contour is not None:
+            main_cnt_area = cv2.contourArea(main_contour)
+            if main_cnt_area > 60000:
+                sleep_sec = 5
+                print(f'Main Contour Area : {main_cnt_area}')
+                print(f'At intersection, sleeping {sleep_sec}')
+                time.sleep(sleep_sec)
             if colour_present is False and followed_colour is True:
                 ls = last_left_spd
                 rs = last_right_spd
