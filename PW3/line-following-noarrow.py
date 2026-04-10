@@ -194,7 +194,7 @@ class ownPID:
 
 
 pid = ownPID(0.5, 0.01, 0.05)
-BASE_SPEED = 0.55
+BASE_SPEED = 0.40
 MIN_SPEED = 0.30
 
 global COLOUR_RANGES, PRIORITY_COLOUR
@@ -264,8 +264,6 @@ try:
 
         colour_present, accept_mask, reject_mask = detect_colored_line(frame_roi, PRIORITY_COLOUR)
 
-        ini_colour_dir = None
-
         if colour_present:
             followed_colour = True
             thresh_roi = accept_mask.copy()  # type: ignore
@@ -276,9 +274,11 @@ try:
         if reject_mask is not None:
             thresh_roi = cv2.bitwise_xor(thresh_roi, reject_mask)
 
-        print(
-            f"Clr : [{colour_present}] || Flwd : [{followed_colour}] || Dir Chk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
-        )
+        if (now - last_time) > 2:
+            last_time = time.time()
+            print(
+                f"Clr : [{colour_present}] || Flwd : [{followed_colour}] || Dir Chk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+            )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
@@ -307,6 +307,8 @@ try:
                 left_dir.forward()
                 right_dir.forward()
 
+                move_sec = 1
+                print(f'Moving for {move_sec}sec')
                 time.sleep(1)
             else:
                 cent_x, cent_y = calc_centroid(main_contour)
