@@ -288,9 +288,11 @@ try:
                 rs = last_right_spd
                 match ini_colour_dir:
                     case 'Right':
+                        print('Exiting coloured line, moving [Right]')
                         ls = max((BASE_SPEED - 15), 0)
                         rs = max((BASE_SPEED + 15), 0)
                     case 'Left':
+                        print('Exiting coloured line, moving [Left]')
                         ls = max((BASE_SPEED + 15), 0)
                         rs = max((BASE_SPEED - 15), 0)
                 set_duty_cycle_left(ls)
@@ -298,6 +300,7 @@ try:
 
                 ini_colour_dir = None
                 followed_colour = False
+                colour_dir_check = False
 
                 left_dir.forward()
                 right_dir.forward()
