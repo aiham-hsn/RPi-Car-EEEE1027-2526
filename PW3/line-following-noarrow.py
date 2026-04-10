@@ -264,7 +264,7 @@ try:
         if PRIORITY_COLOURS is not None:
             for colour in PRIORITY_COLOURS:
                 colour_present, accept_mask = detect_coloured_line(frame_roi, colour)
-                if colour_present:
+                if colour_present is True:
                     current_colour = colour
                     followed_colour = True
                     thresh_roi = accept_mask.copy()  # type: ignore
@@ -272,6 +272,11 @@ try:
                     if colour_dir_check is False:
                         ini_colour_dir = 'Right' if (col_main_cent_x > (cam_size_x / 2)) else 'Left'
                         colour_dir_check = True
+                else:
+                    current_colour = None
+                    followed_colour = False
+                    colour_dir_check =False
+                    ini_colour_dir=None
 
         if (now - last_time) > 2:
             last_time = time.time()
