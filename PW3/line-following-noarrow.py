@@ -278,11 +278,16 @@ try:
                     colour_dir_check =False
                     ini_colour_dir=None
 
-        if (now - last_time) > 2:
-            last_time = time.time()
-            print(
-                f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
-            )
+
+
+        print(
+            f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+        )
+        #if (now - last_time) > 2:
+        #    last_time = time.time()
+        #    print(
+        #        f"Clr : [{colour_present}] || CurrClr : [{current_colour}] || Flwd : [{followed_colour}] || DirChk : {colour_dir_check} || Dir : [{ini_colour_dir}]"
+        #    )
 
         thresh_roi = process_frame_morphology_ops(thresh_roi)
 
